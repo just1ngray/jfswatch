@@ -1,8 +1,7 @@
 mod cli;
 
-use clap::Parser;
 
 fn main() {
-    let parsed = cli::Cli::parse();
+    let parsed = <cli::Cli as clap::Parser>::parse();
     println!("{:?}", parsed);
 }

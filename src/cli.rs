@@ -1,4 +1,4 @@
-use clap::{ArgAction, Parser};
+use clap::{Parser, ArgAction};
 
 
 /// Run a command when watched files change. Files can be given as exact paths, extended glob patterns, or anchored
