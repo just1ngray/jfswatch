@@ -45,7 +45,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn given_main_jfwatch_clap_command_when_debug_assert_then_clap_authors_approve() {
+    fn given_main_jfswatch_clap_command_when_debug_assert_then_clap_authors_approve() {
         use clap::CommandFactory;
         return Cli::command().debug_assert();
     }

@@ -1,11 +1,11 @@
 [package]
-name = "jfwatch"
+name = "jfswatch"
 version = "0.1.0"
 edition = "2021"
 authors = [
     "Justin Gray (https://github.com/just1ngray)"
 ]
-repository = "https://github.com/just1ngray/jfwatch"
+repository = "https://github.com/just1ngray/jfswatch"
 license-file = "LICENSE"
 readme = "README.md"
 

@@ -1,2 +1,2 @@
-# jfwatch
-Justin's file watching program
+# jfswatch
+Justin's file system watching program
