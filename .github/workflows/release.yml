@@ -7,7 +7,7 @@ on:
       - edited
 
 jobs:
-  release:
+  add-assets:
     name: Add Assets
     runs-on: ubuntu-latest
     strategy:
@@ -45,7 +45,7 @@ jobs:
           files: target/${{ matrix.target }}/release/jfswatch_${{ matrix.target }}
 
   mark-released:
-    needs: release
+    needs: add-assets
     runs-on: ubuntu-latest
     steps:
       - name: Get Release Information
