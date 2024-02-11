@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::PathBuf;
-use crate::explorers::{Explorer, HashMap, SystemTime};
+
+use crate::explorers::Explorer;
+use crate::watched_fs::WatchedFS;
 
 
 pub struct ExactExplorer {
@@ -14,10 +16,10 @@ impl Explorer for ExactExplorer {
         return Self { path: p };
     }
 
-    fn explore(&self, files: &mut HashMap<String, SystemTime>) {
+    fn explore(&self, watched_fs: &mut WatchedFS) {
         if let Ok(metadata) = fs::metadata(&self.path) {
             let mtime = metadata.modified().expect("mtime is not supported on your platform");
-            files.insert(self.path.to_string_lossy().to_string(), mtime);
+            watched_fs.found(self.path.to_string_lossy().to_string(), mtime);
         }
     }
 }

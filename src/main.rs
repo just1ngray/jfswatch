@@ -1,5 +1,6 @@
 mod cli;
 mod explorers;
+mod watched_fs;
 
 
 fn main() {

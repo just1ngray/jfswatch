@@ -1,8 +1,8 @@
 mod exact_explorer;
 
-pub use std::collections::HashMap;
-pub use std::time::SystemTime;
 pub use exact_explorer::ExactExplorer;
+
+use crate::watched_fs::WatchedFS;
 
 
 pub trait Explorer {
@@ -10,5 +10,5 @@ pub trait Explorer {
     fn from_cli_arg(arg: &str) -> Self;
 
     /// Explore the file system for file path(s) matching the pattern
-    fn explore(&self, files: &mut HashMap<String, SystemTime>);
+    fn explore(&self, watched_fs: &mut WatchedFS);
 }
