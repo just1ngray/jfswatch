@@ -15,21 +15,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Compile
-        id: compile
-        uses: rust-build/rust-build.action@v1.4.4
+      - name: Setup Toolchain
+        uses: actions-rs/toolchain@v1
         with:
-          RUSTTARGET: x86_64-unknown-linux-musl
-                      # x86_64-pc-windows-gnu
-                      # wasm32-wasi
-                      # x86_64-apple-darwin
-          TOOLCHAIN_VERSION: stable
-          UPLOAD_MODE: none
-      - name: debug1
-        run: ls ${{ steps.compile.outputs.BUILT_ARCHIVE }}
-      - name: debug2
-        run: ls ${{ steps.compile.outputs.BUILT_CHECKSUM }}
-      # - name: Upload
-      #   uses: softprops/action-gh-release@v1
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          override: true
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target x86_64-unknown-linux-musl
+      - name: DEBUG
+        run: ls -la target/release
+
+      # - name: Compile
+      #   id: compile
+      #   uses: rust-build/rust-build.action@v1.4.4
       #   with:
-      #     files: target/release/jfswatch
+      #     RUSTTARGET: x86_64-unknown-linux-musl
+      #                 # x86_64-pc-windows-gnu
+      #                 # wasm32-wasi
+      #                 # x86_64-apple-darwin
+      #     TOOLCHAIN_VERSION: stable
+      #     UPLOAD_MODE: none
