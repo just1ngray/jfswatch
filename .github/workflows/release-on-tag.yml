@@ -1,6 +1,6 @@
 # FROM: https://dzfrias.dev/blog/deploy-rust-cross-platform-github-actions
 
-name: Deploy
+name: Release-On-Tag
 
 on:
   push:
