@@ -1,8 +1,8 @@
+use std::io;
 use std::io::Write;
 use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
-use std::io;
 
 use crate::explorers::Explorer;
 use crate::watched_fs::FSDifference;
@@ -55,42 +55,16 @@ impl JFSWatch {
         loop {
             let new_fs_watch = self.explore(Some(prev_fs_watch.len()));
 
-            let diff = new_fs_watch.compare(prev_fs_watch);
-            let mut delay = self.sleep;
-            match diff {
+            match new_fs_watch.compare(prev_fs_watch) {
                 FSDifference::Unchanged => {
-                    delay = self.interval;
-                    if self.verbose {
-                        if self.no_change_count == 0 {
-                            println!("No changes in {} paths", new_fs_watch.len());
-                        }
-                        else {
-                            print!("+");
-                            io::stdout().flush().unwrap();
-                        }
-
-                        self.no_change_count += 1;
-                    }
+                    self.handle_unchanged(new_fs_watch.len());
                 }
-                FSDifference::Modified(path) => {
-                    println!("{}'{}' was modified", if self.no_change_count > 0 { "\n" } else { "" }, path);
-                    self.no_change_count = 0;
-                    self.run_command();
-                }
-                FSDifference::New(path) => {
-                    println!("{}'{}' is new", if self.no_change_count > 0 { "\n" } else { "" }, path);
-                    self.no_change_count = 0;
-                    self.run_command();
-                }
-                FSDifference::Deleted(path) => {
-                    println!("{}'{}' was deleted", if self.no_change_count > 0 { "\n" } else { "" }, path);
-                    self.no_change_count = 0;
-                    self.run_command();
+                changed => {
+                    self.handle_change(changed);
                 }
             }
 
             prev_fs_watch = new_fs_watch;
-            sleep(delay);
         }
     }
 
@@ -102,6 +76,39 @@ impl JFSWatch {
         }
 
         return watched_fs;
+    }
+
+    fn handle_change(&mut self, diff: FSDifference) {
+        if self.no_change_count > 0 {
+            println!();
+            self.no_change_count = 0;
+        }
+
+        match diff {
+            FSDifference::Unchanged => unreachable!(),
+            FSDifference::Modified(path) => println!("'{}' was modified", path),
+            FSDifference::New(path) => println!("'{}' is new", path),
+            FSDifference::Deleted(path) => println!("'{}' was deleted", path),
+        }
+
+        self.run_command();
+
+        sleep(self.sleep);
+    }
+
+    fn handle_unchanged(&mut self, npaths: usize) {
+        if self.verbose {
+            if self.no_change_count == 0 {
+                println!("No changes in {} paths", npaths);
+            } else {
+                print!("+");
+                io::stdout().flush().unwrap();
+            }
+
+            self.no_change_count += 1;
+        }
+
+        sleep(self.interval);
     }
 
     fn run_command(&self) {
