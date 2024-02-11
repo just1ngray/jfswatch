@@ -48,12 +48,17 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
+      - name: Get Release Information
+        id: release
+        run: echo "::set-output name=release_id::${{ github.event.release.id }}"
+
       - name: Mark Pre-release as Released
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ steps.release.outputs.release_id }}
         run: |
           curl -X PATCH \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: token $GITHUB_TOKEN" \
-          https://api.github.com/repos/:owner/:repo/releases/:release_id \
+          https://api.github.com/repos/${{ github.repository }}/releases/${{ env.RELEASE_ID }} \
           -d '{"prerelease": false}'
