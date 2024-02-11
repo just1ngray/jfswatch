@@ -18,6 +18,10 @@ fn main() {
         })
         .collect();
 
+    if parsed.regex.len() > 0 || parsed.glob.len() > 0 {
+        unimplemented!("Regex and glob paths are not supported yet");
+    }
+
     let jfs_result = JFSWatch::new(
         explorers,
         parsed.verbose,
