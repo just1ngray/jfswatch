@@ -26,9 +26,14 @@ jobs:
         with:
           use-cross: true
           command: build
-          args: --release --target x86_64-unknown-linux-musl
+          args: --release --verbose --target x86_64-unknown-linux-musl
+
       - name: DEBUG
         run: ls -la target/release
+      - name: Upload
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/release/jfswatch
 
       # - name: Compile
       #   id: compile
