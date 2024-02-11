@@ -18,6 +18,11 @@ pub struct WatchedFS {
 }
 
 impl WatchedFS {
+    pub fn new(size: usize) -> Self {
+        let map = HashMap::with_capacity(size);
+        return WatchedFS { paths: map };
+    }
+
     /// After exploring and finding the existing path `abspath` last modified at `mtime`, mark the path as found
     pub fn found(&mut self, path: String, mtime: SystemTime) {
         self.paths.insert(path, mtime);

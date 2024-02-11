@@ -10,33 +10,33 @@ use clap::{Parser, ArgAction};
 pub struct Cli {
     /// The exact file paths to watch
     #[arg(short, long, action = ArgAction::Append)]
-    exact: Vec<String>,
+    pub exact: Vec<String>,
 
     /// The file paths to watch using extended glob patterns
     #[arg(short, long, action = ArgAction::Append)]
-    glob: Vec<String>,
+    pub glob: Vec<String>,
 
     /// The file paths to watch using anchored regex patterns
     #[arg(short, long, action = ArgAction::Append)]
-    regex: Vec<String>,
+    pub regex: Vec<String>,
 
     /// Seconds between each non-differing check
     #[arg(short, long, default_value_t = 0.1)]
-    interval: f32,
+    pub interval: f32,
 
     /// Seconds to sleep the program after the specified command has been executed. The program will not check for
     /// changes during this time. By default it uses the same value as `interval`
     #[arg(short, long)]
-    sleep: Option<f32>,
+    pub sleep: Option<f32>,
 
     /// The command to execute when changes are detected
     #[arg(required = true)]
-    cmd: Vec<String>,
+    pub cmd: Vec<String>,
 
     /// If set, the program will output more information about which files are being watched and how long the program
     /// takes to check for changes
     #[arg(short, long)]
-    verbose: bool,
+    pub verbose: bool,
 }
 
 
