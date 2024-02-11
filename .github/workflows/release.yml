@@ -8,17 +8,23 @@ on:
 
 jobs:
   release:
-    name: adding binaries to release on ${{ github.ref }}
+    name: Add Assets
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
     steps:
       - uses: actions/checkout@v4
-      - name: Compile and release
+      - name: Compile release binary
+        id: compile
         uses: rust-build/rust-build.action@v1.4.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           RUSTTARGET: x86_64-unknown-linux-musl
-          EXTRA_FILES: "README.md"
           TOOLCHAIN_VERSION: stable
+          UPLOAD_MODE: none
+      - name: Upload program as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Binary
+          path: |
+            ${{ steps.compile.outputs.BUILT_ARCHIVE }}
+            ${{ steps.compile.outputs.BUILT_CHECKSUM }}
