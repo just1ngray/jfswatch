@@ -1,3 +1,4 @@
+use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -55,10 +56,22 @@ impl JFSWatch {
             match diff {
                 FSDifference::Unchanged => {
                     delay = self.interval;
+                    if self.verbose {
+                        println!("No changes in {} paths", new_fs_watch.len());
+                    }
                 }
-                FSDifference::Modified(path) => {}
-                FSDifference::New(path) => {}
-                FSDifference::Deleted(path) => {}
+                FSDifference::Modified(path) => {
+                    println!("'{}' was modified", path);
+                    self.run_command();
+                }
+                FSDifference::New(path) => {
+                    println!("'{}' is new", path);
+                    self.run_command();
+                }
+                FSDifference::Deleted(path) => {
+                    println!("'{}' was deleted", path);
+                    self.run_command();
+                }
             }
 
             prev_fs_watch = new_fs_watch;
@@ -74,5 +87,21 @@ impl JFSWatch {
         }
 
         return watched_fs;
+    }
+
+    fn run_command(&self) {
+        let mut cmd = Command::new(&self.cmd[0]);
+        cmd.args(&self.cmd[1..]);
+
+        let output = cmd.output().unwrap();
+
+        if self.verbose {
+            println!(
+                "---[ {} ]---\nout: {}\n---\nerr: {}",
+                self.cmd.join(" "),
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
     }
 }
