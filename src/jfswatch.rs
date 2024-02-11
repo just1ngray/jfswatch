@@ -1,6 +1,8 @@
+use std::io::Write;
 use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
+use std::io;
 
 use crate::explorers::Explorer;
 use crate::watched_fs::FSDifference;
@@ -12,6 +14,7 @@ pub struct JFSWatch {
     interval: Duration,
     sleep: Duration,
     cmd: Vec<String>,
+    no_change_count: u32,
 }
 
 impl JFSWatch {
@@ -41,10 +44,11 @@ impl JFSWatch {
             cmd,
             interval: Duration::from_secs_f32(interval),
             sleep: Duration::from_secs_f32(sleep),
+            no_change_count: 0,
         });
     }
 
-    pub fn watch(&self) {
+    pub fn watch(&mut self) {
         let mut prev_fs_watch = self.explore(None);
         sleep(self.interval);
 
@@ -57,19 +61,30 @@ impl JFSWatch {
                 FSDifference::Unchanged => {
                     delay = self.interval;
                     if self.verbose {
-                        println!("No changes in {} paths", new_fs_watch.len());
+                        if self.no_change_count == 0 {
+                            println!("No changes in {} paths", new_fs_watch.len());
+                        }
+                        else {
+                            print!("+");
+                            io::stdout().flush().unwrap();
+                        }
+
+                        self.no_change_count += 1;
                     }
                 }
                 FSDifference::Modified(path) => {
-                    println!("'{}' was modified", path);
+                    println!("{}'{}' was modified", if self.no_change_count > 0 { "\n" } else { "" }, path);
+                    self.no_change_count = 0;
                     self.run_command();
                 }
                 FSDifference::New(path) => {
-                    println!("'{}' is new", path);
+                    println!("{}'{}' is new", if self.no_change_count > 0 { "\n" } else { "" }, path);
+                    self.no_change_count = 0;
                     self.run_command();
                 }
                 FSDifference::Deleted(path) => {
-                    println!("'{}' was deleted", path);
+                    println!("{}'{}' was deleted", if self.no_change_count > 0 { "\n" } else { "" }, path);
+                    self.no_change_count = 0;
                     self.run_command();
                 }
             }
@@ -97,7 +112,7 @@ impl JFSWatch {
 
         if self.verbose {
             println!(
-                "---[ {} ]---\nout: {}\n---\nerr: {}",
+                "---[ {} ]---\nout: {}\n---\nerr: {}\n---",
                 self.cmd.join(" "),
                 String::from_utf8_lossy(&output.stdout),
                 String::from_utf8_lossy(&output.stderr)

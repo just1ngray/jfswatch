@@ -27,7 +27,7 @@ fn main() {
     );
 
     match jfs_result {
-        Ok(jfs) => jfs.watch(),
+        Ok(mut jfs) => jfs.watch(),
         Err(error) => {
             let mut cmd = <cli::Cli as clap::CommandFactory>::command();
             cmd.error(clap::error::ErrorKind::ValueValidation, error)
