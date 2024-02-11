@@ -27,15 +27,12 @@ jobs:
           use-cross: true
           command: build
           args: --release --verbose --target x86_64-unknown-linux-musl
-
-      - name: DEBUG
-        run: find . -type f -name 'jfswatch' -executable -print
-
-
+      # - name: FindBinary
+      #   run: find . -type f -name 'jfswatch' -executable -print
       - name: Upload
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-unknown-linux-musl/jfswatch
+          files: target/x86_64-unknown-linux-musl/release/jfswatch
 
       # - name: Compile
       #   id: compile
