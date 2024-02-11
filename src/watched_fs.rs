@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::time::SystemTime;
 
 /// A type to track the differences between two WatchedFS structs.
@@ -53,6 +54,20 @@ impl WatchedFS {
         }
 
         return FSDifference::Unchanged;
+    }
+}
+
+impl Display for WatchedFS {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        return writeln!(
+            f,
+            "{}",
+            self.paths
+                .keys()
+                .map(|path| path.to_string())
+                .collect::<Vec<String>>()
+                .join("\n")
+        );
     }
 }
 

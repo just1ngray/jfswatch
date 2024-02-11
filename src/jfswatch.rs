@@ -50,6 +50,8 @@ impl JFSWatch {
 
     pub fn watch(&mut self) {
         let mut prev_fs_watch = self.explore(None);
+        self.print_formatted_watched_fs(&prev_fs_watch);
+
         sleep(self.interval);
 
         loop {
@@ -61,6 +63,7 @@ impl JFSWatch {
                 }
                 changed => {
                     self.handle_change(changed);
+                    self.print_formatted_watched_fs(&new_fs_watch);
                 }
             }
 
@@ -80,7 +83,7 @@ impl JFSWatch {
 
     fn handle_change(&mut self, diff: FSDifference) {
         if self.no_change_count > 0 {
-            println!();
+            eprintln!();
             self.no_change_count = 0;
         }
 
@@ -99,9 +102,9 @@ impl JFSWatch {
     fn handle_unchanged(&mut self, npaths: usize) {
         if self.verbose {
             if self.no_change_count == 0 {
-                println!("No changes in {} paths", npaths);
+                eprintln!("No changes in {} paths", npaths);
             } else {
-                print!("+");
+                eprint!("+");
                 io::stdout().flush().unwrap();
             }
 
@@ -118,12 +121,20 @@ impl JFSWatch {
         let output = cmd.output().unwrap();
 
         if self.verbose {
-            println!(
+            eprintln!(
                 "---[ {} ]---\nout: {}\n---\nerr: {}\n---",
                 self.cmd.join(" "),
                 String::from_utf8_lossy(&output.stdout),
                 String::from_utf8_lossy(&output.stderr)
             );
         }
+    }
+
+    fn print_formatted_watched_fs(&self, fs_watch: &WatchedFS) {
+        if !self.verbose {
+            return;
+        }
+
+        eprintln!("--[ List of watched paths ]---\n{fs_watch}---");
     }
 }
