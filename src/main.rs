@@ -18,12 +18,20 @@ fn main() {
         })
         .collect();
 
-    let jfs = JFSWatch::new(
+    let jfs_result = JFSWatch::new(
         explorers,
         parsed.verbose,
         parsed.interval,
         parsed.sleep.unwrap_or(parsed.interval),
         parsed.cmd,
     );
-    jfs.watch();
+
+    match jfs_result {
+        Ok(jfs) => jfs.watch(),
+        Err(error) => {
+            let mut cmd = <cli::Cli as clap::CommandFactory>::command();
+            cmd.error(clap::error::ErrorKind::ValueValidation, error)
+                .exit();
+        }
+    }
 }

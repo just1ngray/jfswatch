@@ -20,14 +20,27 @@ impl JFSWatch {
         interval: f32,
         sleep: f32,
         cmd: Vec<String>,
-    ) -> Self {
-        return JFSWatch {
+    ) -> Result<Self, String> {
+        if cmd.len() == 0 {
+            return Err("No command was given".to_string());
+        }
+        if interval <= 0.0 {
+            return Err("Interval must be a positive number of seconds".to_string());
+        }
+        if sleep <= 0.0 {
+            return Err("Sleep must be a positive number of seconds".to_string());
+        }
+        if explorers.len() == 0 {
+            return Err("Empty path discovery list".to_string());
+        }
+
+        return Ok(JFSWatch {
             explorers,
             verbose,
             cmd,
             interval: Duration::from_secs_f32(interval),
             sleep: Duration::from_secs_f32(sleep),
-        };
+        });
     }
 
     pub fn watch(&self) {
