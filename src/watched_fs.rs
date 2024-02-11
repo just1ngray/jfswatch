@@ -1,20 +1,18 @@
 use std::collections::HashMap;
 use std::time::SystemTime;
 
-
 /// A type to track the differences between two WatchedFS structs.
 #[derive(Debug, PartialEq)]
 pub enum FSDifference {
     Unchanged,
     Modified(String),
     New(String),
-    Deleted(String)
+    Deleted(String),
 }
-
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct WatchedFS {
-    paths: HashMap<String, SystemTime>
+    paths: HashMap<String, SystemTime>,
 }
 
 impl WatchedFS {
@@ -43,8 +41,7 @@ impl WatchedFS {
                 if mtime != &prev_mtime {
                     return FSDifference::Modified(owned_path);
                 }
-            }
-            else {
+            } else {
                 // path did not exist in the previous filesystem
                 return FSDifference::New(path.to_owned());
             }
@@ -59,26 +56,27 @@ impl WatchedFS {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
     use super::*;
-
+    use std::time::Duration;
 
     #[test]
     fn given_watched_fs_when_path_found_then_is_added_to_paths() {
-        let mut watched = WatchedFS { paths: HashMap::new() };
+        let mut watched = WatchedFS {
+            paths: HashMap::new(),
+        };
         let mock_path = "mock/path".to_string();
         let mock_time = SystemTime::now();
         watched.found(mock_path.clone(), mock_time.clone());
         assert_eq!(watched.paths, HashMap::from([(mock_path, mock_time)]));
     }
 
-
     #[test]
     fn given_watched_fs_when_len_then_returns_current_size() {
-        let mut watched = WatchedFS { paths: HashMap::new() };
+        let mut watched = WatchedFS {
+            paths: HashMap::new(),
+        };
         assert_eq!(watched.len(), 0);
 
         watched.found("path/a".to_string(), SystemTime::now());
@@ -91,19 +89,23 @@ mod tests {
         assert_eq!(watched.len(), 2);
     }
 
-
     #[test]
     fn given_empty_fs_when_compared_against_another_empty_then_is_unchanged() {
-        let a = WatchedFS { paths: HashMap::new() };
-        let b = WatchedFS { paths: HashMap::new() };
+        let a = WatchedFS {
+            paths: HashMap::new(),
+        };
+        let b = WatchedFS {
+            paths: HashMap::new(),
+        };
         assert_eq!(a.compare(b), FSDifference::Unchanged);
         assert_eq!(a.len(), 0);
     }
 
-
     #[test]
     fn given_non_empty_fs_when_compared_against_itself_then_is_unchanged() {
-        let mut watched = WatchedFS { paths: HashMap::new() };
+        let mut watched = WatchedFS {
+            paths: HashMap::new(),
+        };
         watched.found("/some/path".to_string(), SystemTime::now());
 
         let watched_cloned = watched.clone();
@@ -111,38 +113,56 @@ mod tests {
         assert_eq!(watched.len(), 1);
     }
 
-
     #[test]
     fn given_modified_fs_when_compared_then_returns_modified_with_path() {
         let path = "/this/will/be/modified".to_string();
         let mtime_initial = SystemTime::now() - Duration::new(10, 0); // 10s ago
 
-        let prev_watched = WatchedFS { paths: HashMap::from([(path.clone(), mtime_initial)]) };
-        let curr_watched = WatchedFS { paths: HashMap::from([(path.clone(), SystemTime::now())]) };
+        let prev_watched = WatchedFS {
+            paths: HashMap::from([(path.clone(), mtime_initial)]),
+        };
+        let curr_watched = WatchedFS {
+            paths: HashMap::from([(path.clone(), SystemTime::now())]),
+        };
 
-        assert_eq!(curr_watched.compare(prev_watched), FSDifference::Modified(path));
+        assert_eq!(
+            curr_watched.compare(prev_watched),
+            FSDifference::Modified(path)
+        );
         assert_eq!(curr_watched.len(), 1);
     }
-
 
     #[test]
     fn given_new_file_when_compared_then_returns_new_path() {
         let new_path = "new/path".to_string();
-        let prev_watched = WatchedFS { paths: HashMap::new() };
-        let curr_watched = WatchedFS { paths: HashMap::from([(new_path.clone(), SystemTime::now())]) };
+        let prev_watched = WatchedFS {
+            paths: HashMap::new(),
+        };
+        let curr_watched = WatchedFS {
+            paths: HashMap::from([(new_path.clone(), SystemTime::now())]),
+        };
 
-        assert_eq!(curr_watched.compare(prev_watched), FSDifference::New(new_path));
+        assert_eq!(
+            curr_watched.compare(prev_watched),
+            FSDifference::New(new_path)
+        );
         assert_eq!(curr_watched.len(), 1);
     }
-
 
     #[test]
     fn given_deleted_file_when_compared_then_returns_deleted_path() {
         let deleted_path = "deleted/path".to_string();
-        let prev_watched = WatchedFS { paths: HashMap::from([(deleted_path.clone(), SystemTime::now())]) };
-        let curr_watched = WatchedFS { paths: HashMap::new() };
+        let prev_watched = WatchedFS {
+            paths: HashMap::from([(deleted_path.clone(), SystemTime::now())]),
+        };
+        let curr_watched = WatchedFS {
+            paths: HashMap::new(),
+        };
 
-        assert_eq!(curr_watched.compare(prev_watched), FSDifference::Deleted(deleted_path));
+        assert_eq!(
+            curr_watched.compare(prev_watched),
+            FSDifference::Deleted(deleted_path)
+        );
         assert_eq!(curr_watched.len(), 0);
     }
 }

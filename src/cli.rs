@@ -1,5 +1,4 @@
-use clap::{Parser, ArgAction};
-
+use clap::{ArgAction, Parser};
 
 /// Run a command when watched files change. Files can be given as exact paths, extended glob patterns, or anchored
 /// regex. The program will check for mtime, new file, or deleted file changes every `interval` seconds. If a change
@@ -38,7 +37,6 @@ pub struct Cli {
     #[arg(short, long)]
     pub verbose: bool,
 }
-
 
 #[cfg(test)]
 mod tests {

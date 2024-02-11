@@ -1,26 +1,33 @@
-use std::time::Duration;
 use std::thread::sleep;
+use std::time::Duration;
 
 use crate::explorers::Explorer;
-use crate::watched_fs::WatchedFS;
 use crate::watched_fs::FSDifference;
-
+use crate::watched_fs::WatchedFS;
 
 pub struct JFSWatch {
     explorers: Vec<Box<dyn Explorer>>,
     verbose: bool,
     interval: Duration,
     sleep: Duration,
-    cmd: Vec<String>
+    cmd: Vec<String>,
 }
 
 impl JFSWatch {
-    pub fn new(explorers: Vec<Box<dyn Explorer>>, verbose: bool, interval: f32, sleep: f32, cmd: Vec<String>) -> Self {
+    pub fn new(
+        explorers: Vec<Box<dyn Explorer>>,
+        verbose: bool,
+        interval: f32,
+        sleep: f32,
+        cmd: Vec<String>,
+    ) -> Self {
         return JFSWatch {
-            explorers, verbose, cmd,
+            explorers,
+            verbose,
+            cmd,
             interval: Duration::from_secs_f32(interval),
             sleep: Duration::from_secs_f32(sleep),
-        }
+        };
     }
 
     pub fn watch(&self) {
@@ -35,10 +42,10 @@ impl JFSWatch {
             match diff {
                 FSDifference::Unchanged => {
                     delay = self.interval;
-                },
-                FSDifference::Modified(path) => {},
-                FSDifference::New(path) => {},
-                FSDifference::Deleted(path) => {},
+                }
+                FSDifference::Modified(path) => {}
+                FSDifference::New(path) => {}
+                FSDifference::Deleted(path) => {}
             }
 
             prev_fs_watch = new_fs_watch;
