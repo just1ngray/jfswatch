@@ -2,12 +2,16 @@ run-name: "Building release ${{ github.ref }}"
 
 on:
   release:
-    types: [created]
+    types:
+      - created
+      - edited
 
 jobs:
   release:
-    name: release TODO
+    name: adding binaries to release on ${{ github.ref }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
     steps:
       - uses: actions/checkout@v4
       - name: Compile and release
@@ -15,7 +19,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          RUSTTARGET: x86_64-unknown-linux-gnu
+          RUSTTARGET: x86_64-unknown-linux-musl
           EXTRA_FILES: "README.md"
-      - run: echo "github - ${{ github }}"
-      - run: echo "inputs - ${{ inputs }}"
