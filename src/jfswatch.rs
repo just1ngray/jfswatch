@@ -122,10 +122,17 @@ impl JFSWatch {
 
         if self.verbose {
             eprintln!(
-                "---[ {} ]---\nout: {}\n---\nerr: {}\n---",
+                "---[ {} ]---\nout: {}\n---\nerr: {}\n---[ rc={} ]---\n",
                 self.cmd.join(" "),
                 String::from_utf8_lossy(&output.stdout),
-                String::from_utf8_lossy(&output.stderr)
+                String::from_utf8_lossy(&output.stderr),
+                output.status.code().unwrap()
+            );
+        } else {
+            println!(
+                "$ {} => exited {}",
+                self.cmd.join(" "),
+                output.status.code().unwrap()
             );
         }
     }
