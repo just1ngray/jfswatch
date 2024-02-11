@@ -1,0 +1,21 @@
+run-name: "Building release ${{ github.ref }}"
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    name: release TODO
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and release
+        uses: rust-build/rust-build.action@v1.4.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          RUSTTARGET: x86_64-unknown-linux-gnu
+          EXTRA_FILES: "README.md"
+      - run: echo "github - ${{ github }}"
+      - run: echo "inputs - ${{ inputs }}"
