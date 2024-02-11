@@ -27,13 +27,10 @@ jobs:
           use-cross: true
           command: build
           args: --release --verbose --target x86_64-unknown-linux-musl
-
-      - name: DEBUG
-        run: ls -la target/release
       - name: Upload
         uses: softprops/action-gh-release@v1
         with:
-          files: target/release/jfswatch
+          files: target/x86_64-unknown-linux-musl/jfswatch
 
       # - name: Compile
       #   id: compile
