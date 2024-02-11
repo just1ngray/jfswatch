@@ -13,18 +13,29 @@ jobs:
     strategy:
       fail-fast: true
     steps:
-      - uses: actions/checkout@v4
-      - name: Compile release binary
-        id: compile
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Compile
         uses: rust-build/rust-build.action@v1.4.4
         with:
           RUSTTARGET: x86_64-unknown-linux-musl
+                      # x86_64-pc-windows-gnu
+                      # wasm32-wasi
+                      # x86_64-apple-darwin
           TOOLCHAIN_VERSION: stable
           UPLOAD_MODE: none
-      - name: Upload program as artifact
-        uses: actions/upload-artifact@v3
+      - name: debug1
+        run: ls
+      - name: debug1
+        run: ls target/release
+      - name: Upload
+        uses: softprops/action-gh-release@v1
         with:
-          name: Binary
-          path: |
-            ${{ steps.compile.outputs.BUILT_ARCHIVE }}
-            ${{ steps.compile.outputs.BUILT_CHECKSUM }}
+          files: target/release/jfswatch
+
+        # uses: actions/upload-artifact@v3
+        # with:
+        #   name: Binary
+        #   path: |
+        #     ${{ steps.compile.outputs.BUILT_ARCHIVE }}
+        #     ${{ steps.compile.outputs.BUILT_CHECKSUM }}
