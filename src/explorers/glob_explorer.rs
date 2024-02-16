@@ -37,3 +37,17 @@ impl Explorer for GlobExplorer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+
+    use super::*;
+
+    #[rstest]
+    #[case("[")]
+    #[should_panic]
+    fn given_invalid_glob_pattern_when_new_glob_explorer_then_panics(#[case] pattern: &str) {
+        GlobExplorer::from_cli_arg(pattern);
+    }
+}
