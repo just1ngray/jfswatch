@@ -1,6 +1,8 @@
 mod exact_explorer;
+mod glob_explorer;
 
 pub use exact_explorer::ExactExplorer;
+pub use glob_explorer::GlobExplorer;
 
 use crate::watched_fs::WatchedFS;
 

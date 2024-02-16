@@ -10,17 +10,24 @@ fn main() {
     let parsed = <cli::Cli as clap::Parser>::parse();
     println!("{:?}", parsed);
 
-    let explorers: Vec<Box<dyn Explorer>> = parsed
-        .exact
-        .iter()
-        .map(|exact| -> Box<dyn explorers::Explorer> {
-            Box::new(ExactExplorer::from_cli_arg(exact))
-        })
-        .collect();
-
-    if parsed.regex.len() > 0 || parsed.glob.len() > 0 {
+    if parsed.regex.len() > 0 {
         unimplemented!("Regex and glob paths are not supported yet");
     }
+
+    let mut explorers: Vec<Box<dyn Explorer>> =
+        Vec::with_capacity(parsed.exact.len() + parsed.glob.len() + parsed.regex.len());
+    explorers.extend(
+        parsed
+            .exact
+            .iter()
+            .map(|arg| -> Box<dyn Explorer> { Box::new(ExactExplorer::from_cli_arg(arg)) }),
+    );
+    explorers.extend(
+        parsed
+            .glob
+            .iter()
+            .map(|arg| -> Box<dyn Explorer> { Box::new(GlobExplorer::from_cli_arg(arg)) }),
+    );
 
     let jfs_result = JFSWatch::new(
         explorers,
