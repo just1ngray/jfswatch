@@ -145,3 +145,73 @@ impl JFSWatch {
         eprintln!("--[ List of watched paths ]---\n{fs_watch}---");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+
+    use super::*;
+    use crate::ExactExplorer;
+
+    #[test]
+    fn given_all_valid_args_when_new_then_ok() {
+        let explorers: Vec<Box<dyn Explorer>> = vec![Box::new(ExactExplorer::from_cli_arg("path"))];
+        let verbose = false;
+        let interval = 0.1;
+        let sleep = 0.1;
+        let cmd = vec!["echo".to_string(), "hello".to_string()];
+
+        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        assert!(jfswatch.is_ok());
+    }
+
+    #[test]
+    fn given_no_command_when_new_then_err() {
+        let explorers: Vec<Box<dyn Explorer>> = vec![Box::new(ExactExplorer::from_cli_arg("path"))];
+        let verbose = false;
+        let interval = 0.1;
+        let sleep = 0.1;
+        let cmd = vec![];
+
+        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        assert!(jfswatch.is_err());
+    }
+
+    #[rstest]
+    #[case(0.0)]
+    #[case(-1.0)]
+    fn given_non_positive_interval_when_new_then_err(#[case] interval: f32) {
+        let explorers: Vec<Box<dyn Explorer>> = vec![Box::new(ExactExplorer::from_cli_arg("path"))];
+        let verbose = false;
+        let sleep = 0.1;
+        let cmd = vec![];
+
+        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        assert!(jfswatch.is_err());
+    }
+
+    #[rstest]
+    #[case(0.0)]
+    #[case(-1.0)]
+    fn given_non_positive_sleep_when_new_then_err(#[case] sleep: f32) {
+        let explorers: Vec<Box<dyn Explorer>> = vec![Box::new(ExactExplorer::from_cli_arg("path"))];
+        let verbose = false;
+        let interval = 0.1;
+        let cmd = vec![];
+
+        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        assert!(jfswatch.is_err());
+    }
+
+    #[test]
+    fn given_no_explorers_when_new_then_err() {
+        let explorers = vec![];
+        let verbose = false;
+        let interval = 0.1;
+        let sleep = 0.1;
+        let cmd = vec![];
+
+        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        assert!(jfswatch.is_err());
+    }
+}
