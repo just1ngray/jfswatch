@@ -59,6 +59,10 @@ impl WatchedFS {
 
 impl Display for WatchedFS {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.len() == 0 {
+            return write!(f, "");
+        }
+
         return writeln!(
             f,
             "{}",
@@ -179,5 +183,28 @@ mod tests {
             FSDifference::Deleted(deleted_path)
         );
         assert_eq!(curr_watched.len(), 0);
+    }
+
+    #[test]
+    fn given_watched_fs_when_displayed_then_shows_all_paths() {
+        let mut watched = WatchedFS::new(3);
+        watched.found("path/a".to_string(), SystemTime::now());
+        watched.found("path/b".to_string(), SystemTime::now());
+        watched.found("path/c".to_string(), SystemTime::now());
+
+        let displayed = format!("{}", watched);
+
+        assert!(displayed.contains("path/a"));
+        assert!(displayed.contains("path/b"));
+        assert!(displayed.contains("path/c"));
+    }
+
+    #[test]
+    fn given_empty_watched_fs_when_displayed_then_is_empty_string() {
+        let watched = WatchedFS::new(0);
+
+        let displayed = format!("{}", watched);
+
+        assert_eq!(displayed, "".to_string());
     }
 }
