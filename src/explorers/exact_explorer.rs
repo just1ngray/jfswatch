@@ -24,3 +24,31 @@ impl Explorer for ExactExplorer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn given_non_existing_path_when_explore_then_watched_unchanged() {
+        let mut watched = WatchedFS::new(10);
+        let path = std::env::temp_dir().join("i-dont-exist");
+        let explorer = ExactExplorer { path };
+
+        explorer.explore(&mut watched);
+
+        assert_eq!(watched.len(), 0);
+    }
+
+    #[test]
+    fn given_existing_path_when_explore_then_watched_includes_that_path() {
+        let mut watched = WatchedFS::new(10);
+        let path = std::env::temp_dir().join("file.txt");
+        std::fs::write(&path, "contents").unwrap();
+        let explorer = ExactExplorer { path };
+
+        explorer.explore(&mut watched);
+
+        assert_eq!(watched.len(), 1);
+    }
+}
