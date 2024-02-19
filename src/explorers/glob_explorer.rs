@@ -57,8 +57,9 @@ mod tests {
 
     #[test]
     fn given_simple_pattern_when_explore_then_finds_exact_match() {
+        let tmp = tempdir_in(".").unwrap();
+        let basedir = tmp.path().to_owned();
         let mut watched_fs = WatchedFS::new(3);
-        let basedir = tempdir_in(".").unwrap().path().to_owned();
         make_files(&basedir, vec!["a.txt", "b.txt", "c.txt"]);
 
         let glob_pattern = format!("{}/b.txt", basedir.to_string_lossy());
@@ -77,8 +78,9 @@ mod tests {
 
     #[test]
     fn given_star_pattern_when_explore_then_finds_matches() {
+        let tmp = tempdir_in(".").unwrap();
+        let basedir = tmp.path().to_owned();
         let mut watched_fs = WatchedFS::new(3);
-        let basedir = tempdir_in(".").unwrap().path().to_owned();
         let fullpaths = make_files(&basedir, vec!["a.txt", "b.yaml", "c.txt"]);
 
         let glob_pattern = format!("{}/*.txt", basedir.to_string_lossy());
