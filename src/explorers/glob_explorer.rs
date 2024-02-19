@@ -41,9 +41,9 @@ impl Explorer for GlobExplorer {
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;
-    use std::env::temp_dir;
 
     use rstest::rstest;
+    use tempfile::tempdir_in;
 
     use super::*;
     use crate::test_utils::utils::make_files;
@@ -58,7 +58,7 @@ mod tests {
     #[test]
     fn given_simple_pattern_when_explore_then_finds_exact_match() {
         let mut watched_fs = WatchedFS::new(3);
-        let basedir = temp_dir();
+        let basedir = tempdir_in(".").unwrap().path().to_owned();
         make_files(&basedir, vec!["a.txt", "b.txt", "c.txt"]);
 
         let glob_pattern = format!("{}/b.txt", basedir.to_string_lossy());
@@ -72,6 +72,29 @@ mod tests {
                 .map(|p| p.to_string())
                 .collect::<HashSet<String>>(),
             HashSet::from([glob_pattern])
+        );
+    }
+
+    #[test]
+    fn given_star_pattern_when_explore_then_finds_matches() {
+        let mut watched_fs = WatchedFS::new(3);
+        let basedir = tempdir_in(".").unwrap().path().to_owned();
+        let fullpaths = make_files(&basedir, vec!["a.txt", "b.yaml", "c.txt"]);
+
+        let glob_pattern = format!("{}/*.txt", basedir.to_string_lossy());
+        let explorer = GlobExplorer::from_cli_arg(&glob_pattern);
+        explorer.explore(&mut watched_fs);
+
+        assert_eq!(watched_fs.len(), 2);
+        assert_eq!(
+            watched_fs
+                .paths()
+                .map(|p| p.to_string())
+                .collect::<HashSet<String>>(),
+            HashSet::from([
+                fullpaths[0].to_string_lossy().to_string(),
+                fullpaths[2].to_string_lossy().to_string()
+            ])
         );
     }
 }
