@@ -1,3 +1,4 @@
+use std::collections::hash_map::Keys;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::time::SystemTime;
@@ -20,6 +21,10 @@ impl WatchedFS {
     pub fn new(size: usize) -> Self {
         let map = HashMap::with_capacity(size);
         return WatchedFS { paths: map };
+    }
+
+    pub fn paths(&self) -> Keys<'_, String, SystemTime> {
+        return self.paths.keys();
     }
 
     /// After exploring and finding the existing path `abspath` last modified at `mtime`, mark the path as found
@@ -88,7 +93,8 @@ mod tests {
         let mock_path = "mock/path".to_string();
         let mock_time = SystemTime::now();
         watched.found(mock_path.clone(), mock_time.clone());
-        assert_eq!(watched.paths, HashMap::from([(mock_path, mock_time)]));
+        assert_eq!(watched.paths, HashMap::from([(mock_path.clone(), mock_time)]));
+        assert_eq!(watched.paths().collect::<Vec<&String>>(), vec![&mock_path]);
     }
 
     #[test]
@@ -97,15 +103,19 @@ mod tests {
             paths: HashMap::new(),
         };
         assert_eq!(watched.len(), 0);
+        assert_eq!(watched.paths().len(), 0);
 
         watched.found("path/a".to_string(), SystemTime::now());
         assert_eq!(watched.len(), 1);
+        assert_eq!(watched.paths().collect::<Vec<&String>>(), vec!["path/a"]);
 
         watched.found("path/b".to_string(), SystemTime::now());
         assert_eq!(watched.len(), 2);
+        assert_eq!(watched.paths().collect::<Vec<&String>>(), vec!["path/a", "path/b"]);
 
         watched.found("path/a".to_string(), SystemTime::now());
         assert_eq!(watched.len(), 2);
+        assert_eq!(watched.paths().collect::<Vec<&String>>(), vec!["path/a", "path/b"]);
     }
 
     #[test]
