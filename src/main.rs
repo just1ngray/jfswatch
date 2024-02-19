@@ -1,6 +1,7 @@
 mod cli;
 mod explorers;
 mod jfswatch;
+mod test_utils;
 mod watched_fs;
 
 use crate::explorers::*;

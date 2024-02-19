@@ -40,14 +40,38 @@ impl Explorer for GlobExplorer {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+    use std::env::temp_dir;
+
     use rstest::rstest;
 
     use super::*;
+    use crate::test_utils::utils::make_files;
 
     #[rstest]
     #[case("[")]
     #[should_panic]
     fn given_invalid_glob_pattern_when_new_glob_explorer_then_panics(#[case] pattern: &str) {
         GlobExplorer::from_cli_arg(pattern);
+    }
+
+    #[test]
+    fn given_simple_pattern_when_explore_then_finds_exact_match() {
+        let mut watched_fs = WatchedFS::new(3);
+        let basedir = temp_dir();
+        make_files(&basedir, vec!["a.txt", "b.txt", "c.txt"]);
+
+        let glob_pattern = format!("{}/b.txt", basedir.to_string_lossy());
+        let explorer = GlobExplorer::from_cli_arg(&glob_pattern);
+        explorer.explore(&mut watched_fs);
+
+        assert_eq!(watched_fs.len(), 1);
+        assert_eq!(
+            watched_fs
+                .paths()
+                .map(|p| p.to_string())
+                .collect::<HashSet<String>>(),
+            HashSet::from([glob_pattern])
+        );
     }
 }
