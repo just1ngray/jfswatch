@@ -82,6 +82,8 @@ mod tests {
         let basedir = tmp.path().to_owned();
         let mut watched_fs = WatchedFS::new(3);
         let fullpaths = make_files(&basedir, vec!["a.txt", "b.yaml", "c.txt"]);
+        let a_txt = &fullpaths[0];
+        let b_txt = &fullpaths[2];
 
         let glob_pattern = format!("{}/*.txt", basedir.to_string_lossy());
         let explorer = GlobExplorer::from_cli_arg(&glob_pattern);
@@ -94,8 +96,8 @@ mod tests {
                 .map(|p| p.to_string())
                 .collect::<HashSet<String>>(),
             HashSet::from([
-                fullpaths[0].to_string_lossy().to_string(),
-                fullpaths[2].to_string_lossy().to_string()
+                a_txt.to_string_lossy().to_string(),
+                b_txt.to_string_lossy().to_string()
             ])
         );
     }
