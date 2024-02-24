@@ -143,4 +143,20 @@ mod tests {
             vec!["nested/b.txt", "nested/very/deeply/c.txt"],
         );
     }
+
+    #[test]
+    fn given_relative_glob_pattern_when_explore_then_finds_relative_matches() {
+        let mut watched_fs = WatchedFS::new(10);
+
+        // 'cargo test' will always run from the root of the project, alongside the Cargo.toml file
+        let explorer = GlobExplorer::from_cli_arg("src/jfswatch.rs");
+        explorer.explore(&mut watched_fs);
+
+        let explored_paths: Vec<String> = watched_fs.paths().map(|p| p.to_string()).collect();
+        assert!(
+            explored_paths.contains(&"src/jfswatch.rs".to_string()),
+            "Explored exactly: {:?}",
+            explored_paths
+        );
+    }
 }
