@@ -100,7 +100,7 @@ impl JFSWatch {
 
         let output = cmd.output().unwrap();
         trace!(
-            "stdout:\n{}\n---\nstderr:\n{}",
+            "stdout:\n{}---\nstderr:\n{}",
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr),
         );
