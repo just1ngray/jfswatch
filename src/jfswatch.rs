@@ -43,6 +43,7 @@ impl JFSWatch {
 
     pub fn watch(&mut self) {
         let mut prev_fs_watch = self.explore(None);
+        info!("Found {} initial paths", prev_fs_watch.len());
         debug!("Initial paths:\n{}", prev_fs_watch);
 
         sleep(self.interval);
