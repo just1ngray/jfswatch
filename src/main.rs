@@ -20,10 +20,10 @@ fn main() {
         .unwrap();
 
     let parsed = <cli::Cli as clap::Parser>::parse();
-    println!("{:?}", parsed);
+    trace!("Parsed CLI args: {:?}", parsed);
 
     if parsed.regex.len() > 0 {
-        unimplemented!("Regex and glob paths are not supported yet");
+        unimplemented!("Regex patterns are not supported yet");
     }
 
     let mut explorers: Vec<Box<dyn Explorer>> =
