@@ -12,7 +12,7 @@ use crate::explorers::*;
 use crate::jfswatch::JFSWatch;
 
 fn main() {
-    Logger::try_with_env_or_str("trace")
+    Logger::try_with_env_or_str("info")
         .unwrap()
         .adaptive_format_for_stdout(AdaptiveFormat::Detailed)
         .log_to_stdout()
