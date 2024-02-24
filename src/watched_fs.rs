@@ -23,6 +23,7 @@ impl WatchedFS {
         return WatchedFS { paths: map };
     }
 
+    #[allow(dead_code)]
     pub fn paths(&self) -> Keys<'_, String, SystemTime> {
         return self.paths.keys();
     }
