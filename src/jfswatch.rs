@@ -1,5 +1,3 @@
-use std::io;
-use std::io::Write;
 use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
@@ -14,7 +12,6 @@ pub struct JFSWatch {
     interval: Duration,
     sleep: Duration,
     cmd: Vec<String>,
-    no_change_count: u32,
 }
 
 impl JFSWatch {
@@ -44,13 +41,12 @@ impl JFSWatch {
             cmd,
             interval: Duration::from_secs_f32(interval),
             sleep: Duration::from_secs_f32(sleep),
-            no_change_count: 0,
         });
     }
 
     pub fn watch(&mut self) {
         let mut prev_fs_watch = self.explore(None);
-        self.print_formatted_watched_fs(&prev_fs_watch);
+        debug!("Initial paths:\n{}", prev_fs_watch);
 
         sleep(self.interval);
 
@@ -63,7 +59,7 @@ impl JFSWatch {
                 }
                 changed => {
                     self.handle_change(changed);
-                    self.print_formatted_watched_fs(&new_fs_watch);
+                    trace!("Updated paths:\n{}", new_fs_watch);
                 }
             }
 
@@ -82,16 +78,11 @@ impl JFSWatch {
     }
 
     fn handle_change(&mut self, diff: FSDifference) {
-        if self.no_change_count > 0 {
-            eprintln!();
-            self.no_change_count = 0;
-        }
-
         match diff {
             FSDifference::Unchanged => unreachable!(),
-            FSDifference::Modified(path) => println!("'{}' was modified", path),
-            FSDifference::New(path) => println!("'{}' is new", path),
-            FSDifference::Deleted(path) => println!("'{}' was deleted", path),
+            FSDifference::Modified(path) => info!("'{}' was modified", path),
+            FSDifference::New(path) => info!("'{}' is new", path),
+            FSDifference::Deleted(path) => info!("'{}' was deleted", path),
         }
 
         self.run_command();
@@ -100,49 +91,27 @@ impl JFSWatch {
     }
 
     fn handle_unchanged(&mut self, npaths: usize) {
-        if self.verbose {
-            if self.no_change_count == 0 {
-                eprintln!("No changes in {} paths", npaths);
-            } else {
-                eprint!("+");
-                io::stdout().flush().unwrap();
-            }
-
-            self.no_change_count += 1;
-        }
-
+        debug!("No changes in {} paths", npaths);
         sleep(self.interval);
     }
 
     fn run_command(&self) {
+        info!("Running command: {}", self.cmd.join(" "));
+
         let mut cmd = Command::new(&self.cmd[0]);
         cmd.args(&self.cmd[1..]);
 
         let output = cmd.output().unwrap();
-
-        if self.verbose {
-            eprintln!(
-                "---[ {} ]---\nout: {}\n---\nerr: {}\n---[ rc={} ]---\n",
-                self.cmd.join(" "),
-                String::from_utf8_lossy(&output.stdout),
-                String::from_utf8_lossy(&output.stderr),
-                output.status.code().unwrap()
-            );
-        } else {
-            println!(
-                "$ {} => exited {}",
-                self.cmd.join(" "),
-                output.status.code().unwrap()
-            );
-        }
-    }
-
-    fn print_formatted_watched_fs(&self, fs_watch: &WatchedFS) {
-        if !self.verbose {
-            return;
-        }
-
-        eprintln!("--[ List of watched paths ]---\n{fs_watch}---");
+        trace!(
+            "stdout:\n{}\n---\nstderr:\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr),
+        );
+        debug!(
+            "$ {} => exited {}",
+            self.cmd.join(" "),
+            output.status.code().unwrap()
+        );
     }
 }
 
