@@ -73,6 +73,8 @@ mod tests {
 
     #[rstest]
     #[case("[")]
+    #[case("**a")]
+    #[case("a**")]
     #[should_panic]
     fn given_invalid_glob_pattern_when_new_glob_explorer_then_panics(#[case] pattern: &str) {
         GlobExplorer::from_cli_arg(pattern);
@@ -86,9 +88,59 @@ mod tests {
     #[test]
     fn given_star_pattern_when_explore_then_finds_matches() {
         absolute_fs_test(
-            vec!["a.txt", "b.yaml", "c.txt"],
+            vec!["a.txt", "bb.yaml", "ccc.txt"],
             "*.txt",
-            vec!["a.txt", "c.txt"],
+            vec!["a.txt", "ccc.txt"],
+        );
+    }
+
+    #[test]
+    fn given_star_pattern_when_explore_then_does_not_match_slashes() {
+        absolute_fs_test(
+            vec!["a.txt", "nested/b.txt", "nested/very/deeply/c.txt"],
+            "*.txt",
+            vec!["a.txt"],
+        );
+    }
+
+    #[test]
+    fn given_question_operator_when_explore_then_substitutes_any_single_character() {
+        absolute_fs_test(
+            vec!["cat.txt", "dog.txt", "snake.txt"],
+            "???.txt",
+            vec!["cat.txt", "dog.txt"],
+        );
+    }
+
+    #[test]
+    fn given_positive_square_brackets_when_explore_then_matches_any_character_in_brackets() {
+        absolute_fs_test(
+            vec!["a.txt", "b.txt", "bb.txt", "c.txt"],
+            "[ab].txt",
+            vec!["a.txt", "b.txt"],
+        );
+    }
+
+    #[test]
+    fn given_negated_square_brackets_when_explore_then_matches_any_character_not_in_brackets() {
+        absolute_fs_test(
+            vec!["a.txt", "b.txt", "bb.txt", "c.txt"],
+            "[!ab].txt",
+            vec!["c.txt"],
+        );
+    }
+
+    #[test]
+    fn given_nested_directories_when_explore_then_finds_directories_too() {
+        absolute_fs_test(vec!["a.txt", "nested/b.txt"], "nested", vec!["nested"]);
+    }
+
+    #[test]
+    fn given_double_star_when_explore_then_searches_subdirectories() {
+        absolute_fs_test(
+            vec!["a.txt", "nested/b.txt", "nested/very/deeply/c.txt"],
+            "nested/**/*.txt",
+            vec!["nested/b.txt", "nested/very/deeply/c.txt"],
         );
     }
 }
