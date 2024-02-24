@@ -58,10 +58,10 @@ impl JFSWatch {
                 }
                 changed => {
                     match changed {
-                        FSDifference::Unchanged => unreachable!(),
                         FSDifference::Modified(path) => info!("'{}' was modified", path),
                         FSDifference::New(path) => info!("'{}' is new", path),
                         FSDifference::Deleted(path) => info!("'{}' was deleted", path),
+                        FSDifference::Unchanged => unreachable!(),
                     }
                     trace!("Updated paths:\n{}", new_fs_watch);
                     self.run_command();
