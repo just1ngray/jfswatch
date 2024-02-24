@@ -1,3 +1,7 @@
+#[macro_use]
+extern crate log;
+use flexi_logger::{AdaptiveFormat, Logger};
+
 mod cli;
 mod explorers;
 mod jfswatch;
@@ -8,6 +12,13 @@ use crate::explorers::*;
 use crate::jfswatch::JFSWatch;
 
 fn main() {
+    Logger::try_with_env_or_str("trace")
+        .unwrap()
+        .adaptive_format_for_stdout(AdaptiveFormat::Detailed)
+        .log_to_stdout()
+        .start()
+        .unwrap();
+
     let parsed = <cli::Cli as clap::Parser>::parse();
     println!("{:?}", parsed);
 
