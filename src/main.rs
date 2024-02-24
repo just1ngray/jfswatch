@@ -1,3 +1,7 @@
+#[macro_use]
+extern crate log;
+use flexi_logger::{AdaptiveFormat, Logger};
+
 mod cli;
 mod explorers;
 mod jfswatch;
@@ -8,11 +12,18 @@ use crate::explorers::*;
 use crate::jfswatch::JFSWatch;
 
 fn main() {
+    Logger::try_with_env_or_str("info")
+        .unwrap()
+        .adaptive_format_for_stdout(AdaptiveFormat::Detailed)
+        .log_to_stdout()
+        .start()
+        .unwrap();
+
     let parsed = <cli::Cli as clap::Parser>::parse();
-    println!("{:?}", parsed);
+    trace!("Parsed CLI args: {:?}", parsed);
 
     if parsed.regex.len() > 0 {
-        unimplemented!("Regex and glob paths are not supported yet");
+        unimplemented!("Regex patterns are not supported yet");
     }
 
     let mut explorers: Vec<Box<dyn Explorer>> =
@@ -32,7 +43,6 @@ fn main() {
 
     let jfs_result = JFSWatch::new(
         explorers,
-        parsed.verbose,
         parsed.interval,
         parsed.sleep.unwrap_or(parsed.interval),
         parsed.cmd,

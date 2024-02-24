@@ -4,6 +4,9 @@ use clap::{ArgAction, Parser};
 /// regex. The program will check for mtime, new file, or deleted file changes every `interval` seconds. If a change
 /// is detected, the program will execute the specified command and sleep for `sleep` seconds before resuming standard
 /// interval checks.
+///
+/// The logging level can be changed by setting the `RUST_LOG` environment variable to one of: `trace`, `debug`,
+/// `info`, `warn`, `error`.
 #[derive(Debug, Parser)]
 #[command(author, version, long_about = None)]
 pub struct Cli {
@@ -31,11 +34,6 @@ pub struct Cli {
     /// The command to execute when changes are detected
     #[arg(required = true)]
     pub cmd: Vec<String>,
-
-    /// If set, the program will output more information about which files are being watched and how long the program
-    /// takes to check for changes
-    #[arg(short, long)]
-    pub verbose: bool,
 }
 
 #[cfg(test)]
