@@ -84,7 +84,7 @@ impl JFSWatch {
     }
 
     fn run_command(&self) {
-        info!("Running command: {}", self.cmd.join(" "));
+        debug!("Running command: {}", self.cmd.join(" "));
 
         let mut cmd = Command::new(&self.cmd[0]);
         cmd.args(&self.cmd[1..]);
