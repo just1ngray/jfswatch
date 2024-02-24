@@ -1,3 +1,4 @@
+use std::collections::hash_map::Keys;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::time::SystemTime;
@@ -20,6 +21,11 @@ impl WatchedFS {
     pub fn new(size: usize) -> Self {
         let map = HashMap::with_capacity(size);
         return WatchedFS { paths: map };
+    }
+
+    #[allow(dead_code)]
+    pub fn paths(&self) -> Keys<'_, String, SystemTime> {
+        return self.paths.keys();
     }
 
     /// After exploring and finding the existing path `abspath` last modified at `mtime`, mark the path as found
@@ -77,8 +83,10 @@ impl Display for WatchedFS {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::collections::HashSet;
     use std::time::Duration;
+
+    use super::*;
 
     #[test]
     fn given_watched_fs_when_path_found_then_is_added_to_paths() {
@@ -88,7 +96,11 @@ mod tests {
         let mock_path = "mock/path".to_string();
         let mock_time = SystemTime::now();
         watched.found(mock_path.clone(), mock_time.clone());
-        assert_eq!(watched.paths, HashMap::from([(mock_path, mock_time)]));
+        assert_eq!(
+            watched.paths,
+            HashMap::from([(mock_path.clone(), mock_time)])
+        );
+        assert_eq!(watched.paths().collect::<Vec<&String>>(), vec![&mock_path]);
     }
 
     #[test]
@@ -97,15 +109,47 @@ mod tests {
             paths: HashMap::new(),
         };
         assert_eq!(watched.len(), 0);
+        assert_eq!(watched.paths().len(), 0);
+        assert_eq!(
+            watched
+                .paths()
+                .map(|p| p.clone())
+                .collect::<HashSet<String>>(),
+            HashSet::new()
+        );
 
         watched.found("path/a".to_string(), SystemTime::now());
         assert_eq!(watched.len(), 1);
+        assert_eq!(watched.paths().len(), 1);
+        assert_eq!(
+            watched
+                .paths()
+                .map(|p| p.clone())
+                .collect::<HashSet<String>>(),
+            HashSet::from(["path/a".to_string()])
+        );
 
         watched.found("path/b".to_string(), SystemTime::now());
         assert_eq!(watched.len(), 2);
+        assert_eq!(watched.paths().len(), 2);
+        assert_eq!(
+            watched
+                .paths()
+                .map(|p| p.clone())
+                .collect::<HashSet<String>>(),
+            HashSet::from(["path/a".to_string(), "path/b".to_string()])
+        );
 
         watched.found("path/a".to_string(), SystemTime::now());
         assert_eq!(watched.len(), 2);
+        assert_eq!(watched.paths().len(), 2);
+        assert_eq!(
+            watched
+                .paths()
+                .map(|p| p.clone())
+                .collect::<HashSet<String>>(),
+            HashSet::from(["path/a".to_string(), "path/b".to_string()])
+        );
     }
 
     #[test]
