@@ -43,7 +43,6 @@ fn main() {
 
     let jfs_result = JFSWatch::new(
         explorers,
-        parsed.verbose,
         parsed.interval,
         parsed.sleep.unwrap_or(parsed.interval),
         parsed.cmd,

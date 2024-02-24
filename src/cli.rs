@@ -31,11 +31,6 @@ pub struct Cli {
     /// The command to execute when changes are detected
     #[arg(required = true)]
     pub cmd: Vec<String>,
-
-    /// If set, the program will output more information about which files are being watched and how long the program
-    /// takes to check for changes
-    #[arg(short, long)]
-    pub verbose: bool,
 }
 
 #[cfg(test)]

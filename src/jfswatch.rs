@@ -8,7 +8,6 @@ use crate::watched_fs::WatchedFS;
 
 pub struct JFSWatch {
     explorers: Vec<Box<dyn Explorer>>,
-    verbose: bool,
     interval: Duration,
     sleep: Duration,
     cmd: Vec<String>,
@@ -17,7 +16,6 @@ pub struct JFSWatch {
 impl JFSWatch {
     pub fn new(
         explorers: Vec<Box<dyn Explorer>>,
-        verbose: bool,
         interval: f32,
         sleep: f32,
         cmd: Vec<String>,
@@ -37,7 +35,6 @@ impl JFSWatch {
 
         return Ok(JFSWatch {
             explorers,
-            verbose,
             cmd,
             interval: Duration::from_secs_f32(interval),
             sleep: Duration::from_secs_f32(sleep),
@@ -125,24 +122,22 @@ mod tests {
     #[test]
     fn given_all_valid_args_when_new_then_ok() {
         let explorers: Vec<Box<dyn Explorer>> = vec![Box::new(ExactExplorer::from_cli_arg("path"))];
-        let verbose = false;
         let interval = 0.1;
         let sleep = 0.1;
         let cmd = vec!["echo".to_string(), "hello".to_string()];
 
-        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        let jfswatch = JFSWatch::new(explorers, interval, sleep, cmd);
         assert!(jfswatch.is_ok());
     }
 
     #[test]
     fn given_no_command_when_new_then_err() {
         let explorers: Vec<Box<dyn Explorer>> = vec![Box::new(ExactExplorer::from_cli_arg("path"))];
-        let verbose = false;
         let interval = 0.1;
         let sleep = 0.1;
         let cmd = vec![];
 
-        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        let jfswatch = JFSWatch::new(explorers, interval, sleep, cmd);
         assert!(jfswatch.is_err());
     }
 
@@ -151,11 +146,10 @@ mod tests {
     #[case(-1.0)]
     fn given_non_positive_interval_when_new_then_err(#[case] interval: f32) {
         let explorers: Vec<Box<dyn Explorer>> = vec![Box::new(ExactExplorer::from_cli_arg("path"))];
-        let verbose = false;
         let sleep = 0.1;
         let cmd = vec![];
 
-        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        let jfswatch = JFSWatch::new(explorers, interval, sleep, cmd);
         assert!(jfswatch.is_err());
     }
 
@@ -164,23 +158,21 @@ mod tests {
     #[case(-1.0)]
     fn given_non_positive_sleep_when_new_then_err(#[case] sleep: f32) {
         let explorers: Vec<Box<dyn Explorer>> = vec![Box::new(ExactExplorer::from_cli_arg("path"))];
-        let verbose = false;
         let interval = 0.1;
         let cmd = vec![];
 
-        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        let jfswatch = JFSWatch::new(explorers, interval, sleep, cmd);
         assert!(jfswatch.is_err());
     }
 
     #[test]
     fn given_no_explorers_when_new_then_err() {
         let explorers = vec![];
-        let verbose = false;
         let interval = 0.1;
         let sleep = 0.1;
         let cmd = vec![];
 
-        let jfswatch = JFSWatch::new(explorers, verbose, interval, sleep, cmd);
+        let jfswatch = JFSWatch::new(explorers, interval, sleep, cmd);
         assert!(jfswatch.is_err());
     }
 }
