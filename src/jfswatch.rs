@@ -53,11 +53,19 @@ impl JFSWatch {
 
             match new_fs_watch.compare(prev_fs_watch) {
                 FSDifference::Unchanged => {
-                    self.handle_unchanged(new_fs_watch.len());
+                    debug!("No changes in {} paths", new_fs_watch.len());
+                    sleep(self.interval);
                 }
                 changed => {
-                    self.handle_change(changed);
+                    match changed {
+                        FSDifference::Unchanged => unreachable!(),
+                        FSDifference::Modified(path) => info!("'{}' was modified", path),
+                        FSDifference::New(path) => info!("'{}' is new", path),
+                        FSDifference::Deleted(path) => info!("'{}' was deleted", path),
+                    }
                     trace!("Updated paths:\n{}", new_fs_watch);
+                    self.run_command();
+                    sleep(self.sleep);
                 }
             }
 
@@ -73,24 +81,6 @@ impl JFSWatch {
         }
 
         return watched_fs;
-    }
-
-    fn handle_change(&mut self, diff: FSDifference) {
-        match diff {
-            FSDifference::Unchanged => unreachable!(),
-            FSDifference::Modified(path) => info!("'{}' was modified", path),
-            FSDifference::New(path) => info!("'{}' is new", path),
-            FSDifference::Deleted(path) => info!("'{}' was deleted", path),
-        }
-
-        self.run_command();
-
-        sleep(self.sleep);
-    }
-
-    fn handle_unchanged(&mut self, npaths: usize) {
-        debug!("No changes in {} paths", npaths);
-        sleep(self.interval);
     }
 
     fn run_command(&self) {
