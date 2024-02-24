@@ -48,6 +48,29 @@ mod tests {
     use super::*;
     use crate::test_utils::utils::make_files;
 
+    fn absolute_fs_test(files: Vec<&str>, glob_pattern: &str, expected_relative_paths: Vec<&str>) {
+        let tmp = tempdir_in(".").unwrap();
+        let basedir = tmp.path().to_owned();
+        let mut watched_fs = WatchedFS::new(10);
+        make_files(&basedir, files);
+
+        // to use the temporary 'basedir', we must make the glob patterns relative to this directory and not
+        // the current working directory. this is accomplished by translating it to an absolute path
+        let glob_pattern = format!("{}/{}", basedir.to_string_lossy(), glob_pattern);
+        let explorer = GlobExplorer::from_cli_arg(&glob_pattern);
+        explorer.explore(&mut watched_fs);
+
+        assert_eq!(watched_fs.len(), expected_relative_paths.len());
+
+        let expected_absolute_paths: HashSet<String> = expected_relative_paths
+            .iter()
+            .map(|p| format!("{}/{}", basedir.to_string_lossy(), p))
+            .collect();
+        let actually_found_paths: HashSet<String> =
+            watched_fs.paths().map(|p| p.to_string()).collect();
+        assert_eq!(actually_found_paths, expected_absolute_paths);
+    }
+
     #[rstest]
     #[case("[")]
     #[should_panic]
@@ -57,48 +80,15 @@ mod tests {
 
     #[test]
     fn given_simple_pattern_when_explore_then_finds_exact_match() {
-        let tmp = tempdir_in(".").unwrap();
-        let basedir = tmp.path().to_owned();
-        let mut watched_fs = WatchedFS::new(3);
-        make_files(&basedir, vec!["a.txt", "b.txt", "c.txt"]);
-
-        let glob_pattern = format!("{}/b.txt", basedir.to_string_lossy());
-        let explorer = GlobExplorer::from_cli_arg(&glob_pattern);
-        explorer.explore(&mut watched_fs);
-
-        assert_eq!(watched_fs.len(), 1);
-        assert_eq!(
-            watched_fs
-                .paths()
-                .map(|p| p.to_string())
-                .collect::<HashSet<String>>(),
-            HashSet::from([glob_pattern])
-        );
+        absolute_fs_test(vec!["a.txt", "b.txt", "c.txt"], "b.txt", vec!["b.txt"]);
     }
 
     #[test]
     fn given_star_pattern_when_explore_then_finds_matches() {
-        let tmp = tempdir_in(".").unwrap();
-        let basedir = tmp.path().to_owned();
-        let mut watched_fs = WatchedFS::new(3);
-        let fullpaths = make_files(&basedir, vec!["a.txt", "b.yaml", "c.txt"]);
-        let a_txt = &fullpaths[0];
-        let b_txt = &fullpaths[2];
-
-        let glob_pattern = format!("{}/*.txt", basedir.to_string_lossy());
-        let explorer = GlobExplorer::from_cli_arg(&glob_pattern);
-        explorer.explore(&mut watched_fs);
-
-        assert_eq!(watched_fs.len(), 2);
-        assert_eq!(
-            watched_fs
-                .paths()
-                .map(|p| p.to_string())
-                .collect::<HashSet<String>>(),
-            HashSet::from([
-                a_txt.to_string_lossy().to_string(),
-                b_txt.to_string_lossy().to_string()
-            ])
+        absolute_fs_test(
+            vec!["a.txt", "b.yaml", "c.txt"],
+            "*.txt",
+            vec!["a.txt", "c.txt"],
         );
     }
 }
