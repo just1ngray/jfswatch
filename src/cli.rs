@@ -1,26 +1,28 @@
 use clap::{ArgAction, Parser};
 
-/// Run a command when watched files change. Files can be given as exact paths or basic glob patterns. The program will
-/// check for mtime, new file, or deleted file changes every `interval` seconds. If a change is detected, the program
-/// will execute the specified command and sleep for `sleep` seconds before resuming standard interval checks.
-///
-/// The logging level can be changed by setting the `RUST_LOG` environment variable to one of: `trace`, `debug`,
-/// `info`, `warn`, `error`.
-///
-/// # Example
-/// Run `cargo test` when any Rust file changes. Check for changes every 0.5 seconds and sleep for 2.0 seconds after
-/// running the tests.
-///
-/// ```shell
-/// jfswatch \
-///     --interval 0.5 \
-///     --sleep 2.0 \
-///     --glob '**/*.rs' \
-///     --exact Cargo.toml \
-///     cargo test
-/// ```
 #[derive(Debug, Parser)]
-#[command(author, version, long_about = None)]
+#[command(author, long_about = None, about = r"
+Run a command when watched files change. Files can be given as exact paths or
+basic glob patterns. The program will check for mtime, new file, or deleted
+file changes every `interval` seconds. If a change is detected, the program
+will execute the specified command and sleep for `sleep` seconds before
+resuming standard interval checks.
+
+The logging level can be changed by setting the `RUST_LOG` environment variable
+to one of: `trace`, `debug`, `info`, `warn`, `error`.
+
+# Example
+Run `cargo test` when any Rust file changes. Check for changes every 0.5
+seconds and sleep for 2.0 seconds after running the tests.
+
+```shell
+jfswatch \
+    --interval 0.5 \
+    --sleep 2.0 \
+    --glob '**/*.rs' \
+    --exact Cargo.toml \
+    cargo test
+```")]
 pub struct Cli {
     /// The exact file paths to watch
     #[arg(short, long, action = ArgAction::Append)]
