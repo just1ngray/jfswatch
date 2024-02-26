@@ -16,14 +16,12 @@ to one of: `trace`, `debug`, `info`, `warn`, `error`.
 Run `cargo test` when any Rust file changes. Check for changes every 0.5
 seconds and sleep for 2.0 seconds after running the tests.
 
-```shell
-jfswatch \
+$ jfswatch \
     --interval 0.5 \
     --sleep 2.0 \
     --glob '**/*.rs' \
     --exact Cargo.toml \
     cargo test
-```
 
 Usage: jfswatch [OPTIONS] <CMD>...
 
