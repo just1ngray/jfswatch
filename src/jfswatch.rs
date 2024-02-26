@@ -95,22 +95,23 @@ impl JFSWatch {
 
     /// Executes the specified command
     fn run_command(&self) {
-        debug!("Running command: {}", self.cmd.join(" "));
+        info!("$ {}", self.cmd.join(" "));
 
-        let mut cmd = Command::new(&self.cmd[0]);
-        cmd.args(&self.cmd[1..]);
+        let status = Command::new(&self.cmd[0])
+            .args(&self.cmd[1..])
+            .stderr(std::process::Stdio::inherit())
+            .stdout(std::process::Stdio::inherit())
+            .stdin(std::process::Stdio::inherit())
+            .status();
 
-        let output = cmd.output().unwrap();
-        trace!(
-            "stdout:\n{}---\nstderr:\n{}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr),
-        );
-        debug!(
-            "$ {} => exited {}",
-            self.cmd.join(" "),
-            output.status.code().unwrap()
-        );
+        match status {
+            Ok(status) => {
+                info!("\n... Exited with status: {}", status);
+            }
+            Err(error) => {
+                error!("... Error running command: {}", error);
+            }
+        }
     }
 }
 
