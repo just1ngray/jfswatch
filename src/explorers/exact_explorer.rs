@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use crate::explorers::Explorer;
 use crate::watched_fs::WatchedFS;
 
+/// A file system explorer that looks for a simple path on the file system.
 #[derive(Debug)]
 pub struct ExactExplorer {
     path: PathBuf,

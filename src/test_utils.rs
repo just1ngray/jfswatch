@@ -3,6 +3,7 @@ pub mod utils {
     use std::fs;
     use std::path::PathBuf;
 
+    /// Creates `files` inside a `basedir` directory. Returns their full paths in the same order
     pub fn make_files(basedir: &PathBuf, files: Vec<&str>) -> Vec<PathBuf> {
         let mut fullpaths = Vec::with_capacity(files.len());
 
