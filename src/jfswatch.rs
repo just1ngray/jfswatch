@@ -95,14 +95,14 @@ impl JFSWatch {
 
     /// Executes the specified command
     fn run_command(&self) {
-        let mut cmd = Command::new(&self.cmd[0]);
-        cmd.args(&self.cmd[1..]);
-        cmd.stderr(std::process::Stdio::inherit());
-        cmd.stdout(std::process::Stdio::inherit());
-        cmd.stdin(std::process::Stdio::inherit());
-
         info!("$ {}", self.cmd.join(" "));
-        let status = cmd.status(); // executes the command
+
+        let status = Command::new(&self.cmd[0])
+            .args(&self.cmd[1..])
+            .stderr(std::process::Stdio::inherit())
+            .stdout(std::process::Stdio::inherit())
+            .stdin(std::process::Stdio::inherit())
+            .status();
 
         match status {
             Ok(status) => {
