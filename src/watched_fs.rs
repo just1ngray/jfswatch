@@ -12,23 +12,27 @@ pub enum FSDifference {
     Deleted(String),
 }
 
+/// A data structure to manage the watched paths on the filesystem and their last modified time
 #[derive(Debug, PartialEq, Clone)]
 pub struct WatchedFS {
     paths: HashMap<String, SystemTime>,
 }
 
 impl WatchedFS {
+    /// Creates a new WatchedFS with a given capacity
+    /// Note: the capacity will expand automatically as needed
     pub fn new(size: usize) -> Self {
         let map = HashMap::with_capacity(size);
         return WatchedFS { paths: map };
     }
 
+    /// Returns an iterator over the paths and their last modified time
     #[allow(dead_code)]
     pub fn paths(&self) -> Keys<'_, String, SystemTime> {
         return self.paths.keys();
     }
 
-    /// After exploring and finding the existing path `abspath` last modified at `mtime`, mark the path as found
+    /// Record that a given `path` exists, and was last modified at `mtime`
     pub fn found(&mut self, path: String, mtime: SystemTime) {
         self.paths.insert(path, mtime);
     }

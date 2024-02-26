@@ -6,10 +6,18 @@ use crate::explorers::Explorer;
 use crate::watched_fs::FSDifference;
 use crate::watched_fs::WatchedFS;
 
+/// Main data structure to maintain the state of the JFSWatch application
 pub struct JFSWatch {
+    /// How to discover paths on the file system
     explorers: Vec<Box<dyn Explorer>>,
+
+    /// How long to wait between non-changing checks before exploring again
     interval: Duration,
+
+    /// How long to wait after running the command before exploring again
     sleep: Duration,
+
+    /// The command to run when an explored path changes
     cmd: Vec<String>,
 }
 
@@ -41,6 +49,7 @@ impl JFSWatch {
         });
     }
 
+    /// The main loop for checking the file system and running the specified command (blocking call)
     pub fn watch(&mut self) {
         let mut prev_fs_watch = self.explore(None);
         info!("Found {} initial paths", prev_fs_watch.len());
@@ -73,6 +82,7 @@ impl JFSWatch {
         }
     }
 
+    /// Explores the file system for paths and finds their modified times
     fn explore(&self, prev_size: Option<usize>) -> WatchedFS {
         let mut watched_fs = WatchedFS::new(prev_size.unwrap_or(self.explorers.len()));
 
@@ -83,6 +93,7 @@ impl JFSWatch {
         return watched_fs;
     }
 
+    /// Executes the specified command
     fn run_command(&self) {
         debug!("Running command: {}", self.cmd.join(" "));
 
