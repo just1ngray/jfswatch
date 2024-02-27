@@ -38,7 +38,7 @@ When you want to use powerful shell features such as pipes (`|`), redirects
 command.
 
 For example, each time `Cargo.toml` is modified, append the current date to a
-file called 'Cargo.toml_was_modified.txt' and print the `$SHELL` environment
+file called `Cargo.toml_was_modified.txt` and print the `$SHELL` environment
 variable used to execute that command.
 
 Note the difference between running `"echo $SHELL"` and `'echo $SHELL'`. When
