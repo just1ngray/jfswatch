@@ -31,8 +31,10 @@ file called 'Cargo.toml_was_modified.txt' and print the $SHELL environment
 variable used to execute that command.
 
 Note the difference between running "echo $SHELL" and 'echo $SHELL'. When
-double quoted, the variable will be evaluated when the command is created
-before being sent to jfswatch. When single quoted, it's passed as a raw string.
+double quoted, $SHELL will be evaluated first and then passed into jfswatch.
+When single quoted, $SHELL passed as a raw string to jfswatch, which will be
+evaluated later when the command is run. This difference is reflected in the
+jfswatch logs.
 
 $ jfswatch \
     --exact Cargo.toml \
