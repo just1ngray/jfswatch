@@ -33,16 +33,17 @@ $ jfswatch \
 
 ### Full Shell Example
 
-When you want to use powerful shell features such as pipes (|), redirects (>),
-multiple commands (&&), or environment variables, you must quote your command.
+When you want to use powerful shell features such as pipes (`|`), redirects
+(`>`), multiple commands (`&&`), or environment variables, you must quote your
+command.
 
 For example, each time `Cargo.toml` is modified, append the current date to a
-file called 'Cargo.toml_was_modified.txt' and print the $SHELL environment
+file called 'Cargo.toml_was_modified.txt' and print the `$SHELL` environment
 variable used to execute that command.
 
-Note the difference between running "echo $SHELL" and 'echo $SHELL'. When
-double quoted, $SHELL will be evaluated first and then passed into jfswatch.
-When single quoted, $SHELL passed as a raw string to jfswatch, which will be
+Note the difference between running `"echo $SHELL"` and `'echo $SHELL'`. When
+double quoted, `$SHELL` will be evaluated first and then passed into jfswatch.
+When single quoted, `$SHELL` passed as a raw string to jfswatch, which will be
 evaluated later when the command is run. This difference is reflected in the
 jfswatch logs.
 
