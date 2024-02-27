@@ -1,8 +1,11 @@
-# jfswatch
+# JFSWatch
 
-Justin's file system watching program
+Justin's file system watching program.
 
-```
+When some path of interest on the file system changes, run a specified command.
+
+## About
+
 Run a command when watched files change. Files can be given as exact paths or
 basic glob patterns. The program will check for mtime, new file, or deleted
 file changes every `interval` seconds. If a change is detected, the program
@@ -12,18 +15,24 @@ resuming standard interval checks.
 The logging level can be changed by setting the `RUST_LOG` environment variable
 to one of: `trace`, `debug`, `info`, `warn`, `error`.
 
-# Simple Example
+## Examples
+
+### Simple Example
+
 Run `cargo test` when any Rust file changes. Check for changes every 0.5
 seconds and sleep for 2.0 seconds after running the tests.
 
+```shell
 $ jfswatch \
     --interval 0.5 \
     --sleep 2.0 \
     --glob '**/*.rs' \
     --exact Cargo.toml \
     cargo test
+```
 
-# Full Shell Example
+### Full Shell Example
+
 When you want to use powerful shell features such as pipes (|), redirects (>),
 multiple commands (&&), or environment variables, you must quote your command.
 
@@ -37,9 +46,12 @@ When single quoted, $SHELL passed as a raw string to jfswatch, which will be
 evaluated later when the command is run. This difference is reflected in the
 jfswatch logs.
 
+```shell
 $ jfswatch \
     --exact Cargo.toml \
     'echo running command in $SHELL && echo $(date) >> Cargo.toml_was_modified.txt'
+```
+
 
 Usage: jfswatch [OPTIONS] <CMD>...
 
@@ -53,4 +65,3 @@ Options:
   -i, --interval <INTERVAL>  Seconds to wait between each non-differing check [default: 0.1]
   -s, --sleep <SLEEP>        Seconds to sleep the program after the specified command has been executed. The program will not check for changes during this time. By default it uses the same value as `interval`
   -h, --help                 Print help
-```
