@@ -55,7 +55,6 @@ $ jfswatch \
 ## Usage
 ```
 
-
 Usage: jfswatch [OPTIONS] <CMD>...
 
 Arguments:

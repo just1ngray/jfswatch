@@ -57,8 +57,7 @@ $ jfswatch \
 ```
 
 ## Usage
-```
-"#)]
+```"#)]
 pub struct Cli {
     /// The exact file paths to watch
     #[arg(short, long, action = ArgAction::Append)]
