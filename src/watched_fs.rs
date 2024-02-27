@@ -58,7 +58,7 @@ impl WatchedFS {
             } else {
                 // path did not exist in the previous filesystem
                 return FSDifference::New {
-                    path: *path,
+                    path: path.clone(),
                     mtime: *mtime,
                 };
             }
