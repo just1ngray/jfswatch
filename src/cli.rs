@@ -55,6 +55,9 @@ $ jfswatch \
     --exact Cargo.toml \
     'echo running command in $SHELL && echo $(date) >> Cargo.toml_was_modified.txt'
 ```
+
+## Usage
+```
 "#)]
 pub struct Cli {
     /// The exact file paths to watch

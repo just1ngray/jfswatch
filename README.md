@@ -52,6 +52,9 @@ $ jfswatch \
     'echo running command in $SHELL && echo $(date) >> Cargo.toml_was_modified.txt'
 ```
 
+## Usage
+```
+
 
 Usage: jfswatch [OPTIONS] <CMD>...
 
