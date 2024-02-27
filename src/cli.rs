@@ -1,7 +1,7 @@
 use clap::{ArgAction, Parser};
 
 #[derive(Debug, Parser)]
-#[command(author, long_about = None, about = r"
+#[command(author, long_about = None, about = r#"
 Run a command when watched files change. Files can be given as exact paths or
 basic glob patterns. The program will check for mtime, new file, or deleted
 file changes every `interval` seconds. If a change is detected, the program
@@ -30,10 +30,14 @@ For example, each time `Cargo.toml` is modified, append the current date to a
 file called 'Cargo.toml_was_modified.txt' and print the $SHELL environment
 variable used to execute that command.
 
+Note the difference between running "echo $SHELL" and 'echo $SHELL'. When
+double quoted, the variable will be evaluated when the command is created
+before being sent to jfswatch. When single quoted, it's passed as a raw string.
+
 $ jfswatch \
     --exact Cargo.toml \
     'echo running command in $SHELL && echo $(date) >> Cargo.toml_was_modified.txt'
-")]
+"#)]
 pub struct Cli {
     /// The exact file paths to watch
     #[arg(short, long, action = ArgAction::Append)]

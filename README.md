@@ -31,6 +31,10 @@ For example, each time `Cargo.toml` is modified, append the current date to a
 file called 'Cargo.toml_was_modified.txt' and print the $SHELL environment
 variable used to execute that command.
 
+Note the difference between running "echo $SHELL" and 'echo $SHELL'. When
+double quoted, the variable will be evaluated when the command is created
+before being sent to jfswatch. When single quoted, it's passed as a raw string.
+
 $ jfswatch \
     --exact Cargo.toml \
     'echo running command in $SHELL && echo $(date) >> Cargo.toml_was_modified.txt'
