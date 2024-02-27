@@ -96,8 +96,12 @@ mod tests {
 
     #[test]
     fn given_cli_help_text_when_compared_against_readme_then_is_the_same() {
-        let help_text = Cli::command().render_long_help().to_string();
+        let help_text = Cli::command().render_help().to_string();
         let readme = include_str!("../README.md");
-        assert_eq!(help_text, readme);
+        assert_eq!(
+            readme.trim(),
+            help_text.trim(),
+            "README.md needs to be updated. Run 'cargo run -- -h > README.md'"
+        );
     }
 }
