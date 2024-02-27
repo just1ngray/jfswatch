@@ -7,9 +7,9 @@ use std::time::SystemTime;
 #[derive(Debug, PartialEq)]
 pub enum FSDifference {
     Unchanged,
-    Modified(String),
-    New(String),
-    Deleted(String),
+    Modified { path: String, mtime: SystemTime },
+    New { path: String, mtime: SystemTime },
+    Deleted { path: String },
 }
 
 /// A data structure to manage the watched paths on the filesystem and their last modified time
@@ -50,17 +50,23 @@ impl WatchedFS {
             if let Some((owned_path, prev_mtime)) = prev_fs.paths.remove_entry(path) {
                 // path existed, but now we must check the mtime
                 if mtime != &prev_mtime {
-                    return FSDifference::Modified(owned_path);
+                    return FSDifference::Modified {
+                        path: owned_path,
+                        mtime: *mtime,
+                    };
                 }
             } else {
                 // path did not exist in the previous filesystem
-                return FSDifference::New(path.to_owned());
+                return FSDifference::New {
+                    path: *path,
+                    mtime: *mtime,
+                };
             }
         }
 
         // if the path still exists in the previous filesystem paths, then it does not exist in self's
-        for (path, _mtime) in prev_fs.paths {
-            return FSDifference::Deleted(path);
+        for (path, mtime) in prev_fs.paths {
+            return FSDifference::Deleted { path };
         }
 
         return FSDifference::Unchanged;
@@ -184,17 +190,21 @@ mod tests {
     fn given_modified_fs_when_compared_then_returns_modified_with_path() {
         let path = "/this/will/be/modified".to_string();
         let mtime_initial = SystemTime::now() - Duration::new(10, 0); // 10s ago
+        let mtime_now = SystemTime::now();
 
         let prev_watched = WatchedFS {
             paths: HashMap::from([(path.clone(), mtime_initial)]),
         };
         let curr_watched = WatchedFS {
-            paths: HashMap::from([(path.clone(), SystemTime::now())]),
+            paths: HashMap::from([(path.clone(), mtime_now.clone())]),
         };
 
         assert_eq!(
             curr_watched.compare(prev_watched),
-            FSDifference::Modified(path)
+            FSDifference::Modified {
+                path: path,
+                mtime: mtime_now
+            }
         );
         assert_eq!(curr_watched.len(), 1);
     }
@@ -205,13 +215,17 @@ mod tests {
         let prev_watched = WatchedFS {
             paths: HashMap::new(),
         };
+        let mtime = SystemTime::now();
         let curr_watched = WatchedFS {
-            paths: HashMap::from([(new_path.clone(), SystemTime::now())]),
+            paths: HashMap::from([(new_path.clone(), mtime.clone())]),
         };
 
         assert_eq!(
             curr_watched.compare(prev_watched),
-            FSDifference::New(new_path)
+            FSDifference::New {
+                path: new_path,
+                mtime: mtime
+            }
         );
         assert_eq!(curr_watched.len(), 1);
     }
@@ -228,7 +242,7 @@ mod tests {
 
         assert_eq!(
             curr_watched.compare(prev_watched),
-            FSDifference::Deleted(deleted_path)
+            FSDifference::Deleted { path: deleted_path }
         );
         assert_eq!(curr_watched.len(), 0);
     }
