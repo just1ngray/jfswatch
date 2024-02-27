@@ -12,7 +12,7 @@ resuming standard interval checks.
 The logging level can be changed by setting the `RUST_LOG` environment variable
 to one of: `trace`, `debug`, `info`, `warn`, `error`.
 
-# Example
+# Simple Example
 Run `cargo test` when any Rust file changes. Check for changes every 0.5
 seconds and sleep for 2.0 seconds after running the tests.
 
@@ -22,6 +22,18 @@ $ jfswatch \
     --glob '**/*.rs' \
     --exact Cargo.toml \
     cargo test
+
+# Full Shell Example
+When you want to use powerful shell features such as pipes (|), redirects (>),
+multiple commands (&&), or environment variables, you must quote your command.
+
+For example, each time `Cargo.toml` is modified, append the current date to a
+file called 'Cargo.toml_was_modified.txt' and print the $SHELL environment
+variable used to execute that command.
+
+$ jfswatch \
+    --exact Cargo.toml \
+    'echo running command in $SHELL && echo $(date) >> Cargo.toml_was_modified.txt'
 
 Usage: jfswatch [OPTIONS] <CMD>...
 
