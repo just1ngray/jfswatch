@@ -65,7 +65,7 @@ impl WatchedFS {
         }
 
         // if the path still exists in the previous filesystem paths, then it does not exist in self's
-        for (path, mtime) in prev_fs.paths {
+        for (path, _mtime) in prev_fs.paths {
             return FSDifference::Deleted { path };
         }
 
