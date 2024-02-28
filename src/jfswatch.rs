@@ -93,23 +93,29 @@ impl JFSWatch {
                 }
                 changed => {
                     match changed {
-                        FSDifference::Modified { path, mtime } => {
+                        FSDifference::Modified {
+                            ref path,
+                            ref mtime,
+                        } => {
                             info!(
                                 "'{}' was modified at {}",
                                 path,
                                 mtime.format(LOCAL_DATE_FORMAT)
                             )
                         }
-                        FSDifference::New { path, mtime } => info!(
+                        FSDifference::New {
+                            ref path,
+                            ref mtime,
+                        } => info!(
                             "'{}' is new since {}",
                             path,
                             mtime.format(LOCAL_DATE_FORMAT)
                         ),
-                        FSDifference::Deleted { path } => info!("'{}' was deleted", path),
+                        FSDifference::Deleted { ref path } => info!("'{}' was deleted", path),
                         FSDifference::Unchanged => unreachable!(),
                     }
                     trace!("Updated paths:\n{}", new_fs_watch);
-                    let command = self.get_command();
+                    let command = self.get_command(&changed).unwrap();
                     run_command(command);
                     sleep(self.sleep);
                 }
@@ -130,10 +136,33 @@ impl JFSWatch {
         return watched_fs;
     }
 
-    /// Returns the command to run
-    fn get_command(&self) -> String {
-        let command = self.cmd.join(" ");
-        return command;
+    /// Returns the command to run, if a command should run. Substitutes variables where available:
+    /// - $path: the path that changed
+    /// - $diff: new | modified | deleted
+    /// - $mtime: the modified time of the path, or null when unavailable (i.e., diff = deleted)
+    fn get_command(&self, diff: &FSDifference) -> Option<String> {
+        let mut command = self.cmd.join(" ");
+
+        match diff {
+            FSDifference::Unchanged => return None,
+            FSDifference::Modified { path, mtime } => {
+                command = command
+                    .replace("$path", path)
+                    .replace("$diff", "modified")
+                    .replace("$mtime", &mtime.format(LOCAL_DATE_FORMAT).to_string());
+            }
+            FSDifference::New { path, mtime } => {
+                command = command
+                    .replace("$path", path)
+                    .replace("$diff", "new")
+                    .replace("$mtime", &mtime.format(LOCAL_DATE_FORMAT).to_string());
+            }
+            FSDifference::Deleted { path } => {
+                command = command.replace("$path", path).replace("$diff", "deleted");
+            }
+        }
+
+        return Some(command);
     }
 }
 
