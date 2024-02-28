@@ -1,5 +1,3 @@
-use std::fs;
-
 use crate::explorers::Explorer;
 use crate::watched_fs::WatchedFS;
 
@@ -36,12 +34,7 @@ impl Explorer for GlobExplorer {
 
     fn explore(&self, watched_fs: &mut WatchedFS) {
         for path in glob::glob(&self.pattern).unwrap().filter_map(Result::ok) {
-            if let Ok(metadata) = fs::metadata(&path) {
-                let mtime = metadata
-                    .modified()
-                    .expect("mtime is not supported on your platform");
-                watched_fs.found(path.to_string_lossy().to_string(), mtime);
-            }
+            watched_fs.find(&path);
         }
     }
 }

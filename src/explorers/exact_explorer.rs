@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::PathBuf;
 
 use crate::explorers::Explorer;
@@ -17,12 +16,7 @@ impl Explorer for ExactExplorer {
     }
 
     fn explore(&self, watched_fs: &mut WatchedFS) {
-        if let Ok(metadata) = fs::metadata(&self.path) {
-            let mtime = metadata
-                .modified()
-                .expect("mtime is not supported on your platform");
-            watched_fs.found(self.path.to_string_lossy().to_string(), mtime);
-        }
+        watched_fs.find(&self.path);
     }
 }
 
