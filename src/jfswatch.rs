@@ -6,6 +6,9 @@ use crate::explorers::Explorer;
 use crate::watched_fs::FSDifference;
 use crate::watched_fs::WatchedFS;
 
+/// The format for writing DateTime<Local>'s
+const LOCAL_DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S%.3f";
+
 /// Main data structure to maintain the state of the JFSWatch application
 pub struct JFSWatch {
     /// How to discover paths on the file system
@@ -67,10 +70,18 @@ impl JFSWatch {
                 }
                 changed => {
                     match changed {
-                        FSDifference::Modified { path, mtime: _ } => {
-                            info!("'{}' was modified", path)
+                        FSDifference::Modified { path, mtime } => {
+                            info!(
+                                "'{}' was modified at {}",
+                                path,
+                                mtime.format(LOCAL_DATE_FORMAT)
+                            )
                         }
-                        FSDifference::New { path, mtime: _ } => info!("'{}' is new", path),
+                        FSDifference::New { path, mtime } => info!(
+                            "'{}' is new since {}",
+                            path,
+                            mtime.format(LOCAL_DATE_FORMAT)
+                        ),
                         FSDifference::Deleted { path } => info!("'{}' was deleted", path),
                         FSDifference::Unchanged => unreachable!(),
                     }
