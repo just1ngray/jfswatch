@@ -67,7 +67,9 @@ impl JFSWatch {
                 }
                 changed => {
                     match changed {
-                        FSDifference::Modified { path, mtime: _ } => info!("'{}' was modified", path),
+                        FSDifference::Modified { path, mtime: _ } => {
+                            info!("'{}' was modified", path)
+                        }
                         FSDifference::New { path, mtime: _ } => info!("'{}' is new", path),
                         FSDifference::Deleted { path } => info!("'{}' was deleted", path),
                         FSDifference::Unchanged => unreachable!(),
