@@ -9,6 +9,29 @@ use crate::watched_fs::WatchedFS;
 /// The format for writing DateTime<Local>'s
 const LOCAL_DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S%.3f";
 
+/// Executes the specified command
+fn run_command(command: String) {
+    let shell = std::env::var("SHELL").unwrap_or("sh".to_string());
+
+    info!("$ {}", command);
+
+    let status = Command::new(&shell)
+        .args(["-c", &command])
+        .stderr(std::process::Stdio::inherit())
+        .stdout(std::process::Stdio::inherit())
+        .stdin(std::process::Stdio::inherit())
+        .status();
+
+    match status {
+        Ok(status) => {
+            info!("\n... Exited with status: {}", status);
+        }
+        Err(error) => {
+            error!("... Error running command: {}", error);
+        }
+    }
+}
+
 /// Main data structure to maintain the state of the JFSWatch application
 pub struct JFSWatch {
     /// How to discover paths on the file system
@@ -86,7 +109,8 @@ impl JFSWatch {
                         FSDifference::Unchanged => unreachable!(),
                     }
                     trace!("Updated paths:\n{}", new_fs_watch);
-                    self.run_command();
+                    let command = self.get_command();
+                    run_command(command);
                     sleep(self.sleep);
                 }
             }
@@ -106,28 +130,10 @@ impl JFSWatch {
         return watched_fs;
     }
 
-    /// Executes the specified command
-    fn run_command(&self) {
-        let shell = std::env::var("SHELL").unwrap_or("sh".to_string());
+    /// Returns the command to run
+    fn get_command(&self) -> String {
         let command = self.cmd.join(" ");
-
-        info!("$ {}", command);
-
-        let status = Command::new(&shell)
-            .args(["-c", &command])
-            .stderr(std::process::Stdio::inherit())
-            .stdout(std::process::Stdio::inherit())
-            .stdin(std::process::Stdio::inherit())
-            .status();
-
-        match status {
-            Ok(status) => {
-                info!("\n... Exited with status: {}", status);
-            }
-            Err(error) => {
-                error!("... Error running command: {}", error);
-            }
-        }
+        return command;
     }
 }
 
