@@ -59,7 +59,7 @@ $ jfswatch \
 Usage: jfswatch [OPTIONS] <CMD>...
 
 Arguments:
-  <CMD>...  The command to execute when changes are detected
+  <CMD>...  The command to execute when changes are detected. The command can include substitutable bash-like variables: `$diff` or `${diff}` will be one of `new`, `deleted`, or `modified` according to the detected change. `$path` or `${path}` will be the watched path that changed. `$mtime` or `${mtime}` will be the last modified time of the watched path (unavailable for deleted paths)
 
 Options:
   -e, --exact <EXACT>        The exact file paths to watch
