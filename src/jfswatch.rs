@@ -139,7 +139,7 @@ impl JFSWatch {
     /// Returns the command to run, if a command should run. Substitutes variables where available:
     /// - $path: the path that changed
     /// - $diff: new | modified | deleted
-    /// - $mtime: the modified time of the path, or null when unavailable (i.e., diff = deleted)
+    /// - $mtime: the modified time of the path (note this will not be available for deleted diffs)
     fn get_command(&self, diff: &FSDifference) -> Option<String> {
         let mut command = self.cmd.join(" ");
 
@@ -228,5 +228,62 @@ mod tests {
 
         let jfswatch = JFSWatch::new(explorers, interval, sleep, cmd);
         assert!(jfswatch.is_err());
+    }
+
+    fn jfswatch_with_command(command: Vec<&str>) -> JFSWatch {
+        let explorers: Vec<Box<dyn Explorer>> = vec![Box::new(ExactExplorer::from_cli_arg("path"))];
+        let interval = 0.1;
+        let sleep = 0.1;
+        let cmd = command.iter().map(|s| s.to_string()).collect();
+        let jfswatch = JFSWatch::new(explorers, interval, sleep, cmd).unwrap();
+        return jfswatch;
+    }
+
+    #[test]
+    fn given_unchanged_diff_when_get_command_then_none() {
+        let jfswatch = jfswatch_with_command(vec!["doesn't", "matter"]);
+        let diff = FSDifference::Unchanged;
+
+        match jfswatch.get_command(&diff) {
+            Some(_) => panic!("Expected None"),
+            None => {}
+        }
+    }
+
+    #[test]
+    fn given_new_diff_when_get_command_then_substitutes_all() {
+        let jfswatch = jfswatch_with_command(vec!["echo", "$diff", "$path was", "created at $mtime"]);
+        let mtime = chrono::Local::now();
+        let diff = FSDifference::New {
+            path: "mock/path".to_string(),
+            mtime: mtime,
+        };
+        let command = jfswatch.get_command(&diff).unwrap();
+
+        assert_eq!(command, format!("echo new mock/path was created at {}", mtime.format(LOCAL_DATE_FORMAT)));
+    }
+
+    #[test]
+    fn given_modified_diff_when_get_command_then_substitutes_all() {
+        let jfswatch = jfswatch_with_command(vec!["echo", "{ diff: $diff, path: $path, mtime: $mtime }"]);
+        let mtime = chrono::Local::now();
+        let diff = FSDifference::Modified {
+            path: "mock/path".to_string(),
+            mtime: mtime,
+        };
+        let command = jfswatch.get_command(&diff).unwrap();
+
+        assert_eq!(command, format!("echo {{ diff: modified, path: mock/path, mtime: {} }}", mtime.format(LOCAL_DATE_FORMAT)));
+    }
+
+    #[test]
+    fn given_deleted_diff_when_get_command_then_substitutes_all() {
+        let jfswatch = jfswatch_with_command(vec!["echo", "{ diff: $diff }", "path: $path\nmtime: $mtime"]);
+        let diff = FSDifference::Deleted {
+            path: "mock/path".to_string()
+        };
+        let command = jfswatch.get_command(&diff).unwrap();
+
+        assert_eq!(command, format!("echo {{ diff: deleted }} path: mock/path\nmtime: $mtime"));
     }
 }
