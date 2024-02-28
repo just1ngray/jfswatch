@@ -13,7 +13,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build
+    - name: Cargo Check
+      run: cargo check
+      env:
+        RUSTFLAGS: "-D warnings"
+    - name: Check Code Formatting
+      run: cargo fmt -- --check
+    - name: Build Binary
       run: cargo build --verbose
-    - name: Run tests
+    - name: Run Tests
       run: cargo test --verbose
