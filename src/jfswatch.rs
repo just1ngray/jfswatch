@@ -45,6 +45,9 @@ pub struct JFSWatch {
 
     /// The command to run when an explored path changes
     cmd: Vec<String>,
+
+    /// For substituting variables into the command
+    substitution_pattern: regex::Regex,
 }
 
 impl JFSWatch {
@@ -72,6 +75,8 @@ impl JFSWatch {
             cmd,
             interval: Duration::from_secs_f32(interval),
             sleep: Duration::from_secs_f32(sleep),
+            substitution_pattern: regex::Regex::new(r".?\$(\{(diff|path|mtime)\}|diff|path|mtime)")
+                .unwrap(),
         });
     }
 
@@ -137,30 +142,65 @@ impl JFSWatch {
     }
 
     /// Returns the command to run, if a command should run. Substitutes variables where available:
-    /// - $path: the path that changed
-    /// - $diff: new | modified | deleted
-    /// - $mtime: the modified time of the path (note this will not be available for deleted diffs)
+    /// - $path | ${path}:   the path that changed
+    /// - $diff | ${diff}:   new | modified | deleted
+    /// - $mtime | ${mtime}: the modified time of the path (note this will not be available for deleted diffs)
     fn get_command(&self, diff: &FSDifference) -> Option<String> {
+        if let FSDifference::Unchanged = diff {
+            return None;
+        }
+
         let mut command = self.cmd.join(" ");
 
-        match diff {
-            FSDifference::Unchanged => return None,
-            FSDifference::Modified { path, mtime } => {
-                command = command
-                    .replace("$path", path)
-                    .replace("$diff", "modified")
-                    .replace("$mtime", &mtime.format(LOCAL_DATE_FORMAT).to_string());
-            }
-            FSDifference::New { path, mtime } => {
-                command = command
-                    .replace("$path", path)
-                    .replace("$diff", "new")
-                    .replace("$mtime", &mtime.format(LOCAL_DATE_FORMAT).to_string());
-            }
-            FSDifference::Deleted { path } => {
-                command = command.replace("$path", path).replace("$diff", "deleted");
-            }
-        }
+        command = self
+            .substitution_pattern
+            .replace_all(&command, |caps: &regex::Captures| {
+                let first_char = caps.get(0).unwrap().as_str().chars().next().unwrap();
+
+                // escaped case - do not substitute
+                if first_char == '\\' {
+                    return caps.get(0).unwrap().as_str()[1..].to_string();
+                }
+
+                let replacement = match caps
+                    .get(0)
+                    .unwrap()
+                    .as_str()
+                    .trim_matches(['{', '}', ' ', '$'])
+                {
+                    "diff" => match diff {
+                        FSDifference::Modified { .. } => "modified".to_string(),
+                        FSDifference::New { .. } => "new".to_string(),
+                        FSDifference::Deleted { .. } => "deleted".to_string(),
+                        FSDifference::Unchanged => unreachable!(),
+                    },
+                    "path" => match diff {
+                        FSDifference::Modified { path, .. } => path.to_string(),
+                        FSDifference::New { path, .. } => path.to_string(),
+                        FSDifference::Deleted { path } => path.to_string(),
+                        FSDifference::Unchanged => unreachable!(),
+                    },
+                    "mtime" => {
+                        match diff {
+                            FSDifference::Modified { mtime, .. } => {
+                                mtime.format(LOCAL_DATE_FORMAT).to_string()
+                            }
+                            FSDifference::New { mtime, .. } => {
+                                mtime.format(LOCAL_DATE_FORMAT).to_string()
+                            }
+                            FSDifference::Deleted { .. } => {
+                                // no mtime for deleted (use what was previously there)
+                                caps.get(0).unwrap().as_str()[1..].to_string()
+                            }
+                            FSDifference::Unchanged => unreachable!(),
+                        }
+                    }
+                    _ => panic!("Unknown substitution target on {:?}", caps),
+                };
+
+                return format!("{}{}", first_char, replacement);
+            })
+            .to_string();
 
         return Some(command);
     }
@@ -252,7 +292,8 @@ mod tests {
 
     #[test]
     fn given_new_diff_when_get_command_then_substitutes_all() {
-        let jfswatch = jfswatch_with_command(vec!["echo", "$diff", "$path was", "created at $mtime"]);
+        let jfswatch =
+            jfswatch_with_command(vec!["echo", "$diff", "$path was", "created at $mtime"]);
         let mtime = chrono::Local::now();
         let diff = FSDifference::New {
             path: "mock/path".to_string(),
@@ -260,12 +301,19 @@ mod tests {
         };
         let command = jfswatch.get_command(&diff).unwrap();
 
-        assert_eq!(command, format!("echo new mock/path was created at {}", mtime.format(LOCAL_DATE_FORMAT)));
+        assert_eq!(
+            command,
+            format!(
+                "echo new mock/path was created at {}",
+                mtime.format(LOCAL_DATE_FORMAT)
+            )
+        );
     }
 
     #[test]
     fn given_modified_diff_when_get_command_then_substitutes_all() {
-        let jfswatch = jfswatch_with_command(vec!["echo", "{ diff: $diff, path: $path, mtime: $mtime }"]);
+        let jfswatch =
+            jfswatch_with_command(vec!["echo", "{ diff: $diff, path: $path, mtime: $mtime }"]);
         let mtime = chrono::Local::now();
         let diff = FSDifference::Modified {
             path: "mock/path".to_string(),
@@ -273,17 +321,41 @@ mod tests {
         };
         let command = jfswatch.get_command(&diff).unwrap();
 
-        assert_eq!(command, format!("echo {{ diff: modified, path: mock/path, mtime: {} }}", mtime.format(LOCAL_DATE_FORMAT)));
+        assert_eq!(
+            command,
+            format!(
+                "echo {{ diff: modified, path: mock/path, mtime: {} }}",
+                mtime.format(LOCAL_DATE_FORMAT)
+            )
+        );
     }
 
     #[test]
     fn given_deleted_diff_when_get_command_then_substitutes_all() {
-        let jfswatch = jfswatch_with_command(vec!["echo", "{ diff: $diff }", "path: $path\nmtime: $mtime"]);
+        let jfswatch = jfswatch_with_command(vec![
+            "echo",
+            "{ diff: $diff }",
+            "path: $path\nmtime: $mtime",
+        ]);
         let diff = FSDifference::Deleted {
-            path: "mock/path".to_string()
+            path: "mock/path".to_string(),
         };
         let command = jfswatch.get_command(&diff).unwrap();
 
-        assert_eq!(command, format!("echo {{ diff: deleted }} path: mock/path\nmtime: $mtime"));
+        assert_eq!(
+            command,
+            format!("echo {{ diff: deleted }} path: mock/path\nmtime: $mtime")
+        );
+    }
+
+    #[rstest]
+    #[case(FSDifference::New { path: "mock/path".to_string(), mtime: chrono::Local::now() })]
+    #[case(FSDifference::Modified { path: "mock/path".to_string(), mtime: chrono::Local::now() })]
+    #[case(FSDifference::Deleted { path: "mock/path".to_string() })]
+    fn given_any_diff_when_get_command_then_ignores_escaped_variables(#[case] diff: FSDifference) {
+        let jfswatch = jfswatch_with_command(vec!["echo $path \\$path \\${path} ${path}"]);
+        let command = jfswatch.get_command(&diff).unwrap();
+
+        assert_eq!(command, "echo mock/path $path ${path} mock/path");
     }
 }
