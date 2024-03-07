@@ -6,7 +6,7 @@ use crate::watched_fs::WatchedFS;
 #[derive(Debug)]
 enum ExtendGlobToken {
     Literal(char),
-    Subpatterns(Vec<String>)
+    Subpatterns(Vec<String>),
 }
 
 fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
@@ -25,71 +25,91 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
             '\\' => {
                 escaped = true;
                 tokens.push(ExtendGlobToken::Literal(c));
-            },
+            }
             '{' => {
                 depth += 1;
-                tokens.push(ExtendGlobToken::Subpatterns(vec!["".to_owned()]));
-            },
-            '}' => {
+
                 if depth == 1 {
+                    tokens.push(ExtendGlobToken::Subpatterns(vec!["".to_owned()]));
+                } else {
+                    match tokens.last_mut().unwrap() {
+                        ExtendGlobToken::Subpatterns(subpatterns) => {
+                            subpatterns.last_mut().unwrap().push(c);
+                        }
+                        ExtendGlobToken::Literal(_) => panic!("Invalid state"),
+                    }
+                }
+            }
+            '}' => {
+                depth -= 1;
+
+                if depth == 0 {
+                    println!(">>> depth 0 ended");
+                    println!("{tokens:?}");
+
                     let mut extended_basic_glob_patterns: Vec<String> = Vec::new();
 
                     match tokens.pop().unwrap() {
                         ExtendGlobToken::Subpatterns(subpatterns) => {
                             for subpattern in subpatterns {
-                                extended_basic_glob_patterns.extend(extend_glob_pattern(&subpattern));
+                                extended_basic_glob_patterns
+                                    .extend(extend_glob_pattern(&subpattern));
                             }
-                        },
-                        ExtendGlobToken::Literal(_) => panic!("Invalid state")
+                        }
+                        ExtendGlobToken::Literal(_) => panic!("Invalid state"),
                     }
 
                     tokens.push(ExtendGlobToken::Subpatterns(extended_basic_glob_patterns));
+                    println!("{tokens:?}");
+                    println!("<<< depth 0 ended");
+                } else {
+                    match tokens.last_mut().unwrap() {
+                        ExtendGlobToken::Subpatterns(subpatterns) => {
+                            subpatterns.last_mut().unwrap().push(c);
+                        }
+                        ExtendGlobToken::Literal(_) => panic!("Invalid state"),
+                    }
                 }
-
-                depth -= 1;
-            },
+            }
             ',' => {
                 if depth == 0 {
                     tokens.push(ExtendGlobToken::Literal(c));
-                }
-                else if depth == 1 {
+                } else if depth == 1 {
                     // delimits two subpatterns in the depth of interest
                     match tokens.last_mut().unwrap() {
                         ExtendGlobToken::Subpatterns(subpatterns) => {
                             subpatterns.push("".to_owned());
-                        },
-                        _ => panic!("Invalid state")
+                        }
+                        _ => panic!("Invalid state"),
                     }
-                }
-                else {
+                } else {
                     // deep sub-pattern that will be parsed on a recursive step
                     let token = tokens.last_mut().unwrap();
                     match token {
                         ExtendGlobToken::Subpatterns(subpatterns) => {
                             subpatterns.last_mut().unwrap().push(c);
-                        },
-                        _ => panic!("Invalid state")
+                        }
+                        _ => panic!("Invalid state"),
                     }
                 }
-            },
+            }
             _ => {
                 if depth == 0 {
                     tokens.push(ExtendGlobToken::Literal(c));
-                }
-                else {
+                } else {
                     let token = tokens.last_mut().unwrap();
                     match token {
                         ExtendGlobToken::Subpatterns(subpatterns) => {
                             subpatterns.last_mut().unwrap().push(c);
-                        },
-                        _ => panic!("Invalid state")
+                        }
+                        _ => panic!("Invalid state"),
                     }
                 }
             }
         }
     }
 
-    println!("{:?}", tokens);
+    println!("{pattern} => {tokens:?}");
 
     let mut basic_glob_patterns: Vec<String> = vec!["".to_owned()];
     for token in tokens {
@@ -98,9 +118,10 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
                 for pattern in basic_glob_patterns.iter_mut() {
                     pattern.push(c);
                 }
-            },
+            }
             ExtendGlobToken::Subpatterns(subpatterns) => {
-                let mut new_basic_glob_patterns: Vec<String> = Vec::with_capacity(basic_glob_patterns.len() * subpatterns.len());
+                let mut new_basic_glob_patterns: Vec<String> =
+                    Vec::with_capacity(basic_glob_patterns.len() * subpatterns.len());
 
                 for pattern in basic_glob_patterns.iter_mut() {
                     for subpattern in &subpatterns {
@@ -288,6 +309,7 @@ mod tests {
     #[case("base case", vec!["base case"])]
     #[case("escaped \\{ is OK", vec!["escaped \\{ is OK"])]
     #[case("commas, are OK", vec!["commas, are OK"])]
+    #[case("{no reason for expansion}", vec!["no reason for expansion"])]
     #[case("{a,b}", vec!["a", "b"])]
     #[case("{apple,banana}", vec!["apple", "banana"])]
     #[case("{apple,banana,carrot}", vec!["apple", "banana", "carrot"])]
@@ -295,12 +317,16 @@ mod tests {
     #[case("{apple,pumpkin,strawberry} pie", vec!["apple pie", "pumpkin pie", "strawberry pie"])]
     #[case("{a,b,c}{1,2}", vec!["a1", "a2", "b1", "b2", "c1", "c2"])]
     #[case("{a,b}{1,2}{!,?}", vec!["a1!", "a2!", "b1!", "b2!", "a1?", "a2?", "b1?", "b2?"])]
+    #[case("a{b,{c,d}}", vec!["ab", "ac", "ad"])]
+    #[case("{aa{bb,cc,dd{e,f}},why even}.", vec!["why even.", "aabb.", "aacc.", "aadde.", "aaddf."])]
     fn given_extended_glob_pattern_when_extend_glob_pattern_then_converts_into_multiple_basic_patterns(
         #[case] pattern: &str,
-        #[case] expected: Vec<&str>
+        #[case] expected: Vec<&str>,
     ) {
-        let actual: std::collections::HashSet<String> = extend_glob_pattern(pattern).into_iter().collect();
-        let expected: std::collections::HashSet<String> = expected.iter().map(|s| s.to_string()).collect();
+        let actual: std::collections::HashSet<String> =
+            extend_glob_pattern(pattern).into_iter().collect();
+        let expected: std::collections::HashSet<String> =
+            expected.iter().map(|s| s.to_string()).collect();
         assert_eq!(actual, expected);
     }
 }
