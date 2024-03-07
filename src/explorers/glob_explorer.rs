@@ -284,6 +284,15 @@ mod tests {
     }
 
     #[test]
+    fn given_extended_glob_pattern_when_explore_then_finds_all_matches() {
+        absolute_fs_test(
+            vec!["config.yml", "config.yaml"],
+            "config.{yml,yaml}",
+            vec!["config.yml", "config.yaml"],
+        );
+    }
+
+    #[test]
     fn given_relative_glob_pattern_when_explore_then_finds_relative_matches() {
         let mut watched_fs = WatchedFS::new(10);
 
