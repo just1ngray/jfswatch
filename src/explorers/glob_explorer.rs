@@ -3,12 +3,14 @@ use std::collections::HashSet;
 use crate::explorers::Explorer;
 use crate::watched_fs::WatchedFS;
 
+/// A data type used to help parse extended glob patterns into basic glob patterns.
 #[derive(Debug)]
 enum ExtendGlobToken {
     Literal(char),
     Subpatterns(Vec<String>),
 }
 
+/// A helper function which takes an extended glob pattern and returns an equivalent set of basic glob patterns.
 fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
     let mut tokens: Vec<ExtendGlobToken> = Vec::new();
 
