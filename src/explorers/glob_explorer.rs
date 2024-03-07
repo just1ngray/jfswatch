@@ -12,6 +12,8 @@ enum ExtendGlobToken {
 
 /// A helper function which takes an extended glob pattern and returns an equivalent set of basic glob patterns.
 fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
+    // tokens will be either a literal character, or a subpattern at depth >= 1
+    // note: subpatterns deeper than depth 1 will be parsed recursively
     let mut tokens: Vec<ExtendGlobToken> = Vec::new();
 
     /// A character which exists on or beyond depth = 1. This will be parsed later in a recursive step
