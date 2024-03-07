@@ -6,7 +6,7 @@ pub struct GlobExplorer {
     pattern: String,
 }
 
-/// An explorer that uses glob patterns to find paths on the file system.
+/// An explorer that uses extended glob patterns to find paths on the file system.
 ///
 /// From the glob docs: https://docs.rs/glob/latest/glob/struct.Pattern.html
 ///

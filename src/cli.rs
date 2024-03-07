@@ -11,7 +11,7 @@ When some path of interest on the file system changes, run a specified command.
 ## About
 
 Run a command when watched files change. Files can be given as exact paths or
-basic glob patterns. The program will check for mtime, new file, or deleted
+extended glob patterns. The program will check for mtime, new file, or deleted
 file changes every `interval` seconds. If a change is detected, the program
 will execute the specified command and sleep for `sleep` seconds before
 resuming standard interval checks.
@@ -64,7 +64,7 @@ pub struct Cli {
     #[arg(short, long, action = ArgAction::Append)]
     pub exact: Vec<String>,
 
-    /// The file paths to watch using basic glob patterns
+    /// The file paths to watch using extended glob patterns
     #[arg(short, long, action = ArgAction::Append)]
     pub glob: Vec<String>,
 
