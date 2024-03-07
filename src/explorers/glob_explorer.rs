@@ -55,6 +55,7 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
                 depth += 1;
 
                 if depth == 1 {
+                    // prepare for subpatterns at depth 1
                     tokens.push(ExtendGlobToken::Subpatterns(vec!["".to_owned()]));
                 } else {
                     push_subpattern_character(&mut tokens, c);
@@ -86,7 +87,7 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
                 if depth == 0 {
                     tokens.push(ExtendGlobToken::Literal(c));
                 } else if depth == 1 {
-                    // delimits two subpatterns in the depth 1 disjuction
+                    // delimits two subpatterns in the depth 1 disjuction; prepare for the next subpattern
                     match tokens.last_mut().unwrap() {
                         ExtendGlobToken::Subpatterns(subpatterns) => {
                             subpatterns.push("".to_owned());
@@ -107,6 +108,7 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
         }
     }
 
+    // reconstruct the basic glob patterns from the tokens; this is basically the cartesian product
     let mut basic_glob_patterns: Vec<String> = vec!["".to_owned()];
     for token in tokens {
         match token {
