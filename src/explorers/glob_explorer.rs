@@ -1,9 +1,13 @@
 use crate::explorers::Explorer;
 use crate::watched_fs::WatchedFS;
 
+fn extend_glob_pattern(pattern: &str) -> Vec<String> {
+    return vec![pattern.to_owned()];
+}
+
 #[derive(Debug)]
 pub struct GlobExplorer {
-    pattern: String,
+    patterns: Vec<String>,
 }
 
 /// An explorer that uses extended glob patterns to find paths on the file system.
@@ -24,17 +28,22 @@ pub struct GlobExplorer {
 /// >    placing it at the start or the end, e.g. [abc-].
 impl Explorer for GlobExplorer {
     fn from_cli_arg(arg: &str) -> Self {
-        return match glob::Pattern::new(arg) {
-            Ok(_) => Self {
-                pattern: arg.to_string(),
-            },
-            Err(error) => panic!("{}", error.to_string()),
-        };
+        let patterns = extend_glob_pattern(arg);
+
+        for pattern in &patterns {
+            if let Err(error) = glob::Pattern::new(pattern) {
+                panic!("Glob pattern from '{arg}' is invalid: '{}'", error.to_string());
+            }
+        }
+
+        return Self { patterns };
     }
 
     fn explore(&self, watched_fs: &mut WatchedFS) {
-        for path in glob::glob(&self.pattern).unwrap().filter_map(Result::ok) {
-            watched_fs.find(&path);
+        for pattern in self.patterns.iter() {
+            for path in glob::glob(pattern).unwrap().filter_map(Result::ok) {
+                watched_fs.find(&path);
+            }
         }
     }
 }
