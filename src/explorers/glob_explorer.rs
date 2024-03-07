@@ -17,14 +17,37 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
     for c in pattern.chars() {
         if escaped {
             escaped = false;
-            tokens.push(ExtendGlobToken::Literal(c));
+
+            if depth == 0 {
+                tokens.push(ExtendGlobToken::Literal(c));
+            }
+            else {
+                match tokens.last_mut().unwrap() {
+                    ExtendGlobToken::Subpatterns(subpatterns) => {
+                        subpatterns.last_mut().unwrap().push(c);
+                    }
+                    _ => panic!("Invalid state"),
+                }
+            }
+
             continue;
         }
 
         match c {
             '\\' => {
                 escaped = true;
-                tokens.push(ExtendGlobToken::Literal(c));
+
+                if depth == 0 {
+                    tokens.push(ExtendGlobToken::Literal(c));
+                }
+                else {
+                    match tokens.last_mut().unwrap() {
+                        ExtendGlobToken::Subpatterns(subpatterns) => {
+                            subpatterns.last_mut().unwrap().push(c);
+                        }
+                        _ => panic!("Invalid state"),
+                    }
+                }
             }
             '{' => {
                 depth += 1;
@@ -310,6 +333,7 @@ mod tests {
     #[case("escaped \\{ is OK", vec!["escaped \\{ is OK"])]
     #[case("commas, are OK", vec!["commas, are OK"])]
     #[case("{no reason for expansion}", vec!["no reason for expansion"])]
+    #[case("{no reason for \\{\\} expansion}", vec!["no reason for \\{\\} expansion"])]
     #[case("{a,b}", vec!["a", "b"])]
     #[case("{apple,banana}", vec!["apple", "banana"])]
     #[case("{apple,banana,carrot}", vec!["apple", "banana", "carrot"])]
