@@ -287,6 +287,7 @@ mod tests {
     #[rstest]
     #[case("base case", vec!["base case"])]
     #[case("escaped \\{ is OK", vec!["escaped \\{ is OK"])]
+    #[case("commas, are OK", vec!["commas, are OK"])]
     #[case("{a,b}", vec!["a", "b"])]
     #[case("{apple,banana}", vec!["apple", "banana"])]
     #[case("{apple,banana,carrot}", vec!["apple", "banana", "carrot"])]
