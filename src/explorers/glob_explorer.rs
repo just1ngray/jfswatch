@@ -32,7 +32,10 @@ impl Explorer for GlobExplorer {
 
         for pattern in &patterns {
             if let Err(error) = glob::Pattern::new(pattern) {
-                panic!("Glob pattern from '{arg}' is invalid: '{}'", error.to_string());
+                panic!(
+                    "Glob pattern from '{arg}' is invalid: '{}'",
+                    error.to_string()
+                );
             }
         }
 
