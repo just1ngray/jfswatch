@@ -62,7 +62,7 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
                 depth -= 1;
 
                 if depth == 0 {
-                    // closing the subpattern at depth 1: expand subpatterns recursively
+                    // closing the subpattern at depth 1: extend subpatterns recursively
                     let mut extended_basic_glob_patterns: Vec<String> = Vec::new();
 
                     match tokens.pop().unwrap() {
