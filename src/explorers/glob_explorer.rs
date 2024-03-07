@@ -12,6 +12,16 @@ enum ExtendGlobToken {
 fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
     let mut tokens: Vec<ExtendGlobToken> = Vec::new();
 
+    /// A character which exists on or beyond depth = 1. This will be parsed later in a recursive step
+    fn push_subpattern_character(tokens: &mut Vec<ExtendGlobToken>, c: char) {
+        match tokens.last_mut().unwrap() {
+            ExtendGlobToken::Subpatterns(subpatterns) => {
+                subpatterns.last_mut().unwrap().push(c);
+            }
+            _ => panic!("Invalid state"),
+        }
+    }
+
     let mut depth = 0;
     let mut escaped = false;
     for c in pattern.chars() {
@@ -20,14 +30,8 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
 
             if depth == 0 {
                 tokens.push(ExtendGlobToken::Literal(c));
-            }
-            else {
-                match tokens.last_mut().unwrap() {
-                    ExtendGlobToken::Subpatterns(subpatterns) => {
-                        subpatterns.last_mut().unwrap().push(c);
-                    }
-                    _ => panic!("Invalid state"),
-                }
+            } else {
+                push_subpattern_character(&mut tokens, c);
             }
 
             continue;
@@ -39,14 +43,8 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
 
                 if depth == 0 {
                     tokens.push(ExtendGlobToken::Literal(c));
-                }
-                else {
-                    match tokens.last_mut().unwrap() {
-                        ExtendGlobToken::Subpatterns(subpatterns) => {
-                            subpatterns.last_mut().unwrap().push(c);
-                        }
-                        _ => panic!("Invalid state"),
-                    }
+                } else {
+                    push_subpattern_character(&mut tokens, c);
                 }
             }
             '{' => {
@@ -55,21 +53,14 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
                 if depth == 1 {
                     tokens.push(ExtendGlobToken::Subpatterns(vec!["".to_owned()]));
                 } else {
-                    match tokens.last_mut().unwrap() {
-                        ExtendGlobToken::Subpatterns(subpatterns) => {
-                            subpatterns.last_mut().unwrap().push(c);
-                        }
-                        ExtendGlobToken::Literal(_) => panic!("Invalid state"),
-                    }
+                    push_subpattern_character(&mut tokens, c);
                 }
             }
             '}' => {
                 depth -= 1;
 
                 if depth == 0 {
-                    println!(">>> depth 0 ended");
-                    println!("{tokens:?}");
-
+                    // closing the subpattern at depth 1: expand subpatterns recursively
                     let mut extended_basic_glob_patterns: Vec<String> = Vec::new();
 
                     match tokens.pop().unwrap() {
@@ -83,22 +74,15 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
                     }
 
                     tokens.push(ExtendGlobToken::Subpatterns(extended_basic_glob_patterns));
-                    println!("{tokens:?}");
-                    println!("<<< depth 0 ended");
                 } else {
-                    match tokens.last_mut().unwrap() {
-                        ExtendGlobToken::Subpatterns(subpatterns) => {
-                            subpatterns.last_mut().unwrap().push(c);
-                        }
-                        ExtendGlobToken::Literal(_) => panic!("Invalid state"),
-                    }
+                    push_subpattern_character(&mut tokens, c);
                 }
             }
             ',' => {
                 if depth == 0 {
                     tokens.push(ExtendGlobToken::Literal(c));
                 } else if depth == 1 {
-                    // delimits two subpatterns in the depth of interest
+                    // delimits two subpatterns in the depth 1 disjuction
                     match tokens.last_mut().unwrap() {
                         ExtendGlobToken::Subpatterns(subpatterns) => {
                             subpatterns.push("".to_owned());
@@ -106,33 +90,18 @@ fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
                         _ => panic!("Invalid state"),
                     }
                 } else {
-                    // deep sub-pattern that will be parsed on a recursive step
-                    let token = tokens.last_mut().unwrap();
-                    match token {
-                        ExtendGlobToken::Subpatterns(subpatterns) => {
-                            subpatterns.last_mut().unwrap().push(c);
-                        }
-                        _ => panic!("Invalid state"),
-                    }
+                    push_subpattern_character(&mut tokens, c);
                 }
             }
             _ => {
                 if depth == 0 {
                     tokens.push(ExtendGlobToken::Literal(c));
                 } else {
-                    let token = tokens.last_mut().unwrap();
-                    match token {
-                        ExtendGlobToken::Subpatterns(subpatterns) => {
-                            subpatterns.last_mut().unwrap().push(c);
-                        }
-                        _ => panic!("Invalid state"),
-                    }
+                    push_subpattern_character(&mut tokens, c);
                 }
             }
         }
     }
-
-    println!("{pattern} => {tokens:?}");
 
     let mut basic_glob_patterns: Vec<String> = vec!["".to_owned()];
     for token in tokens {
