@@ -152,6 +152,8 @@ pub struct GlobExplorer {
 /// >    [ or [! then it is interpreted as being part of, rather then ending, the character set, so ] and NOT ] can be
 /// >    matched by []] and [!]] respectively. The - character can be specified inside a character sequence pattern by
 /// >    placing it at the start or the end, e.g. [abc-].
+///
+/// There is also extended support for disjunctive subpatterns using {sub1,sub2} syntax.
 impl Explorer for GlobExplorer {
     fn from_cli_arg(arg: &str) -> Self {
         let patterns: Vec<String> = extend_glob_pattern(arg).into_iter().collect();
