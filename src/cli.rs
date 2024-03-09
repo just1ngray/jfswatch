@@ -49,7 +49,8 @@ Note the difference between running `"echo $SHELL"` and `'echo $SHELL'`. When
 double quoted, `$SHELL` will be evaluated first and then passed into jfswatch.
 When single quoted, `$SHELL` passed as a raw string to jfswatch, which will be
 evaluated later when the command is run. This difference is reflected in the
-jfswatch logs.
+jfswatch logs. For this reason it is recommended to use single quotes when
+using all shell features, or substitution variables in the command.
 
 ```shell
 $ jfswatch \
