@@ -14,6 +14,7 @@ fn run_command(command: String) {
     let shell = std::env::var("SHELL").unwrap_or("sh".to_string());
 
     info!("$ {}", command);
+    info!("\n{}", "-".repeat(80));
 
     let status = Command::new(&shell)
         .args(["-c", &command])
@@ -22,9 +23,11 @@ fn run_command(command: String) {
         .stdin(std::process::Stdio::inherit())
         .status();
 
+    info!("\n{}", "-".repeat(80));
+
     match status {
         Ok(status) => {
-            info!("\n... Exited with status: {}", status);
+            info!("... Exited with status: {}", status);
         }
         Err(error) => {
             error!("... Error running command: {}", error);
