@@ -1,12 +1,13 @@
+use crate::explorers::glob_explorer::extend::ExtendedGlobPatternBuilder;
 use crate::explorers::Explorer;
 use crate::watched_fs::WatchedFS;
 
 #[derive(Debug)]
 pub struct GlobExplorer {
-    pattern: String,
+    patterns: Vec<String>,
 }
 
-/// An explorer that uses glob patterns to find paths on the file system.
+/// An explorer that uses extended glob patterns to find paths on the file system.
 ///
 /// From the glob docs: https://docs.rs/glob/latest/glob/struct.Pattern.html
 ///
@@ -22,19 +23,32 @@ pub struct GlobExplorer {
 /// >    [ or [! then it is interpreted as being part of, rather then ending, the character set, so ] and NOT ] can be
 /// >    matched by []] and [!]] respectively. The - character can be specified inside a character sequence pattern by
 /// >    placing it at the start or the end, e.g. [abc-].
+///
+/// There is also extended support for disjunctive subpatterns using {sub1,sub2} syntax.
 impl Explorer for GlobExplorer {
     fn from_cli_arg(arg: &str) -> Self {
-        return match glob::Pattern::new(arg) {
-            Ok(_) => Self {
-                pattern: arg.to_string(),
-            },
-            Err(error) => panic!("{}", error.to_string()),
-        };
+        let patterns: Vec<String> = ExtendedGlobPatternBuilder::from_pattern(arg)
+            .build()
+            .into_iter()
+            .collect();
+
+        for pattern in &patterns {
+            if let Err(error) = glob::Pattern::new(pattern) {
+                panic!(
+                    "Glob pattern from '{arg}' is invalid: '{}'",
+                    error.to_string()
+                );
+            }
+        }
+
+        return Self { patterns };
     }
 
     fn explore(&self, watched_fs: &mut WatchedFS) {
-        for path in glob::glob(&self.pattern).unwrap().filter_map(Result::ok) {
-            watched_fs.find(&path);
+        for pattern in self.patterns.iter() {
+            for path in glob::glob(pattern).unwrap().filter_map(Result::ok) {
+                watched_fs.find(&path);
+            }
         }
     }
 }
@@ -142,6 +156,15 @@ mod tests {
             vec!["a.txt", "nested/b.txt", "nested/very/deeply/c.txt"],
             "nested/**/*.txt",
             vec!["nested/b.txt", "nested/very/deeply/c.txt"],
+        );
+    }
+
+    #[test]
+    fn given_extended_glob_pattern_when_explore_then_finds_all_matches() {
+        absolute_fs_test(
+            vec!["config.yml", "config.yaml"],
+            "config.{yml,yaml}",
+            vec!["config.yml", "config.yaml"],
         );
     }
 
