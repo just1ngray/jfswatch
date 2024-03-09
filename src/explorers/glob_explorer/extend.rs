@@ -3,133 +3,163 @@ use std::collections::HashSet;
 /// A data type used to help parse extended glob patterns into basic glob patterns.
 #[derive(Debug)]
 enum ExtendGlobToken {
+    /// A simple top-level character. E.g., 'a'
     Literal(char),
+
+    /// A glob subpattern. E.g., '{a,b,{00,11}!}' as ["a", "b", "{00,11}!"].
+    /// These patterns are parsed later in another recursive step
     Subpatterns(Vec<String>),
 }
 
-/// A helper function which takes an extended glob pattern and returns an equivalent set of basic glob patterns.
-pub fn extend_glob_pattern(pattern: &str) -> HashSet<String> {
-    // tokens will be either a literal character, or a subpattern at depth >= 1
-    // note: subpatterns deeper than depth 1 will be parsed recursively
-    let mut tokens: Vec<ExtendGlobToken> = Vec::new();
+/// A builder-flavoured struct that helps convert extended glob patterns into a collection of basic glob patterns.
+pub struct ExtendedGlobPatternBuilder {
+    /// the individual components of the glob pattern
+    tokens: Vec<ExtendGlobToken>,
 
-    /// A character which exists on or beyond depth = 1. This will be parsed later in a recursive step
-    fn push_subpattern_character(tokens: &mut Vec<ExtendGlobToken>, c: char) {
-        match tokens.last_mut().unwrap() {
-            ExtendGlobToken::Subpatterns(subpatterns) => {
-                subpatterns.last_mut().unwrap().push(c);
-            }
-            _ => panic!("Invalid state"),
+    /// the current parsing depth (tracks nested {}) - recall; we only parse depth 1 subpatterns in this step, and
+    /// rely on recursive steps to parse nested subpatterns
+    depth: usize,
+
+    /// flags whether the previous character was a backslash (\) or not
+    escaped: bool,
+}
+
+impl ExtendedGlobPatternBuilder {
+    /// A helper function that converts an extended glob pattern into a collection of basic glob patterns.
+    pub fn from_pattern(pattern: &str) -> Self {
+        let mut builder = Self::new();
+        for c in pattern.chars() {
+            builder.character(c);
         }
+        return builder;
     }
 
-    let mut depth = 0;
-    let mut escaped = false;
-    for c in pattern.chars() {
-        if escaped {
-            escaped = false;
+    /// Construct a new empty extended glob pattern builder. Helpful when calling `::character` directly, but
+    /// it's generally more friendly to use `::from_pattern` instead.
+    pub fn new() -> Self {
+        return Self {
+            tokens: Vec::new(),
+            depth: 0,
+            escaped: false,
+        };
+    }
 
-            if depth == 0 {
-                tokens.push(ExtendGlobToken::Literal(c));
-            } else {
-                push_subpattern_character(&mut tokens, c);
-            }
-
-            continue;
+    /// Parse a single additional character from the (potentially) extended glob pattern.
+    pub fn character(&mut self, c: char) {
+        if self.escaped {
+            self.escaped = false;
+            self.normal_character(c);
+            return;
         }
 
         match c {
+            '{' => self.open_parenthesis(),
+            '}' => self.close_parenthesis(),
+            ',' => self.comma(),
             '\\' => {
-                escaped = true;
-
-                if depth == 0 {
-                    tokens.push(ExtendGlobToken::Literal(c));
-                } else {
-                    push_subpattern_character(&mut tokens, c);
-                }
+                self.escaped = true;
+                self.normal_character(c);
             }
-            '{' => {
-                depth += 1;
-
-                if depth == 1 {
-                    // prepare for subpatterns at depth 1
-                    tokens.push(ExtendGlobToken::Subpatterns(vec!["".to_owned()]));
-                } else {
-                    push_subpattern_character(&mut tokens, c);
-                }
-            }
-            '}' => {
-                depth -= 1;
-
-                if depth == 0 {
-                    // closing the subpattern at depth 1: extend subpatterns recursively
-                    let mut extended_basic_glob_patterns: Vec<String> = Vec::new();
-
-                    match tokens.pop().unwrap() {
-                        ExtendGlobToken::Subpatterns(subpatterns) => {
-                            for subpattern in subpatterns {
-                                extended_basic_glob_patterns
-                                    .extend(extend_glob_pattern(&subpattern));
-                            }
-                        }
-                        ExtendGlobToken::Literal(_) => panic!("Invalid state"),
-                    }
-
-                    tokens.push(ExtendGlobToken::Subpatterns(extended_basic_glob_patterns));
-                } else {
-                    push_subpattern_character(&mut tokens, c);
-                }
-            }
-            ',' => {
-                if depth == 0 {
-                    tokens.push(ExtendGlobToken::Literal(c));
-                } else if depth == 1 {
-                    // delimits two subpatterns in the depth 1 disjuction; prepare for the next subpattern
-                    match tokens.last_mut().unwrap() {
-                        ExtendGlobToken::Subpatterns(subpatterns) => {
-                            subpatterns.push("".to_owned());
-                        }
-                        _ => panic!("Invalid state"),
-                    }
-                } else {
-                    push_subpattern_character(&mut tokens, c);
-                }
-            }
-            _ => {
-                if depth == 0 {
-                    tokens.push(ExtendGlobToken::Literal(c));
-                } else {
-                    push_subpattern_character(&mut tokens, c);
-                }
-            }
+            _ => self.normal_character(c),
         }
     }
 
-    // reconstruct the basic glob patterns from the tokens; this is basically the cartesian product
-    let mut basic_glob_patterns: Vec<String> = vec!["".to_owned()];
-    for token in tokens {
-        match token {
-            ExtendGlobToken::Literal(c) => {
-                for pattern in basic_glob_patterns.iter_mut() {
-                    pattern.push(c);
+    /// Converts the tokenized extended glob pattern into a collection of basic glob patterns.
+    pub fn build(self) -> HashSet<String> {
+        let mut basic_glob_patterns: Vec<String> = vec!["".to_owned()];
+        for token in self.tokens {
+            match token {
+                ExtendGlobToken::Literal(c) => {
+                    for pattern in basic_glob_patterns.iter_mut() {
+                        pattern.push(c);
+                    }
+                }
+                ExtendGlobToken::Subpatterns(subpatterns) => {
+                    let mut new_basic_glob_patterns: Vec<String> =
+                        Vec::with_capacity(basic_glob_patterns.len() * subpatterns.len());
+
+                    for pattern in basic_glob_patterns.iter_mut() {
+                        for subpattern in &subpatterns {
+                            new_basic_glob_patterns.push(format!("{pattern}{subpattern}"));
+                        }
+                    }
+
+                    basic_glob_patterns = new_basic_glob_patterns;
                 }
             }
+        }
+
+        return basic_glob_patterns.into_iter().collect();
+    }
+
+    fn comma(&mut self) {
+        if self.depth == 0 {
+            self.tokens.push(ExtendGlobToken::Literal(','));
+        } else if self.depth == 1 {
+            // delimits two subpatterns in the depth 1 disjuction; prepare for the next subpattern
+            match self.tokens.last_mut().unwrap() {
+                ExtendGlobToken::Subpatterns(subpatterns) => {
+                    subpatterns.push("".to_owned());
+                }
+                _ => panic!("Comma was expected to delimit two subpatterns at depth 1. Last token is the wrong type"),
+            }
+        } else {
+            self.push_subpattern_character(',');
+        }
+    }
+
+    fn normal_character(&mut self, c: char) {
+        if self.depth == 0 {
+            self.tokens.push(ExtendGlobToken::Literal(c));
+        } else {
+            self.push_subpattern_character(c);
+        }
+    }
+
+    fn open_parenthesis(&mut self) {
+        self.depth += 1;
+
+        if self.depth == 1 {
+            // prepare for subpatterns at depth 1
+            self.tokens
+                .push(ExtendGlobToken::Subpatterns(vec!["".to_owned()]));
+        } else {
+            self.push_subpattern_character('{');
+        }
+    }
+
+    fn close_parenthesis(&mut self) {
+        self.depth -= 1;
+
+        if self.depth == 0 {
+            // closing the subpattern at depth 1: extend subpatterns recursively
+            let mut extended_basic_glob_patterns: Vec<String> = Vec::new();
+
+            match self.tokens.pop().unwrap() {
+                ExtendGlobToken::Subpatterns(subpatterns) => {
+                    for subpattern in subpatterns {
+                        extended_basic_glob_patterns
+                            .extend(ExtendedGlobPatternBuilder::from_pattern(&subpattern).build());
+                    }
+                }
+                _ => panic!("Cannot close subpattern when last token is not a subpattern"),
+            }
+
+            self.tokens
+                .push(ExtendGlobToken::Subpatterns(extended_basic_glob_patterns));
+        } else {
+            self.push_subpattern_character('}');
+        }
+    }
+
+    fn push_subpattern_character(&mut self, c: char) {
+        match self.tokens.last_mut().unwrap() {
             ExtendGlobToken::Subpatterns(subpatterns) => {
-                let mut new_basic_glob_patterns: Vec<String> =
-                    Vec::with_capacity(basic_glob_patterns.len() * subpatterns.len());
-
-                for pattern in basic_glob_patterns.iter_mut() {
-                    for subpattern in &subpatterns {
-                        new_basic_glob_patterns.push(format!("{pattern}{subpattern}"));
-                    }
-                }
-
-                basic_glob_patterns = new_basic_glob_patterns;
+                subpatterns.last_mut().unwrap().push(c);
             }
+            _ => panic!("Cannot push subpattern character when last token is not a subpattern"),
         }
     }
-
-    return basic_glob_patterns.into_iter().collect();
 }
 
 #[cfg(test)]
@@ -157,8 +187,12 @@ mod tests {
         #[case] pattern: &str,
         #[case] expected: Vec<&str>,
     ) {
+        println!("Glob pattern: {pattern}");
         let actual: std::collections::HashSet<String> =
-            extend_glob_pattern(pattern).into_iter().collect();
+            ExtendedGlobPatternBuilder::from_pattern(pattern)
+                .build()
+                .into_iter()
+                .collect();
         let expected: std::collections::HashSet<String> =
             expected.iter().map(|s| s.to_string()).collect();
         assert_eq!(actual, expected);

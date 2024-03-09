@@ -1,4 +1,4 @@
-use crate::explorers::glob_explorer::extend::extend_glob_pattern;
+use crate::explorers::glob_explorer::extend::ExtendedGlobPatternBuilder;
 use crate::explorers::Explorer;
 use crate::watched_fs::WatchedFS;
 
@@ -27,7 +27,10 @@ pub struct GlobExplorer {
 /// There is also extended support for disjunctive subpatterns using {sub1,sub2} syntax.
 impl Explorer for GlobExplorer {
     fn from_cli_arg(arg: &str) -> Self {
-        let patterns: Vec<String> = extend_glob_pattern(arg).into_iter().collect();
+        let patterns: Vec<String> = ExtendedGlobPatternBuilder::from_pattern(arg)
+            .build()
+            .into_iter()
+            .collect();
 
         for pattern in &patterns {
             if let Err(error) = glob::Pattern::new(pattern) {
