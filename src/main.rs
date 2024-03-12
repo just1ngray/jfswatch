@@ -1,5 +1,7 @@
 #[macro_use]
 extern crate log;
+use clap::{CommandFactory, Parser};
+use clap_complete::generate;
 use flexi_logger::{AdaptiveFormat, Logger};
 
 mod cli;
@@ -19,11 +21,18 @@ fn main() {
         .start()
         .unwrap();
 
-    let parsed = <cli::Cli as clap::Parser>::parse();
+    let parsed = cli::Cli::parse();
     trace!("Parsed CLI args: {:?}", parsed);
 
+    if let Some(shell) = parsed.autocomplete {
+        let mut cmd = cli::Cli::command();
+        let name = cmd.get_name().to_string();
+        generate(shell, &mut cmd, name, &mut std::io::stdout());
+        return;
+    }
+
     if parsed.cmd.len() == 0 {
-        let mut cmd = <cli::Cli as clap::CommandFactory>::command();
+        let mut cmd = cli::Cli::command();
         cmd.error(
             clap::error::ErrorKind::ValueValidation,
             "A command must be specified. Use -h for more help",
