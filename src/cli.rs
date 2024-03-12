@@ -69,10 +69,6 @@ pub struct Cli {
     #[arg(short, long, action = ArgAction::Append)]
     pub glob: Vec<String>,
 
-    /// The file paths to watch using anchored regex patterns (NOT IMPLEMENTED YET!)
-    #[arg(short, long, action = ArgAction::Append)]
-    pub regex: Vec<String>,
-
     /// Seconds to wait between each non-differing check
     #[arg(short, long, default_value_t = 0.1)]
     pub interval: f32,
