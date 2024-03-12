@@ -1,4 +1,5 @@
-use clap::{ArgAction, Parser};
+use clap::{ArgAction, Parser, ValueHint};
+use clap_complete::Shell;
 
 /// # JFSWatch
 ///
@@ -14,6 +15,16 @@ use clap::{ArgAction, Parser};
 /// file changes every `interval` seconds. If a change is detected, the program
 /// will execute the specified command and sleep for `sleep` seconds before
 /// resuming standard interval checks.
+///
+/// ## Installation
+///
+/// Simply download the compiled binary from the
+/// [releases page](https://github.com/just1ngray/jfswatch/releases). Make sure
+/// to choose the correct binary for your system. The binary can then be executed
+/// by adding it to a `PATH` directory, or by running it directly.
+///
+/// Optionally, you can use the `--autocomplete` flag to generate a file that will
+/// enable tab completion for your shell. This is not required, but can be helpful.
 ///
 /// ## Examples
 ///
@@ -86,11 +97,23 @@ use clap::{ArgAction, Parser};
 )]
 pub struct Cli {
     /// The exact file path to watch
-    #[arg(short, long, action = ArgAction::Append, verbatim_doc_comment)]
+    #[arg(
+        short,
+        long,
+        action = ArgAction::Append,
+        verbatim_doc_comment,
+        value_hint = ValueHint::AnyPath
+    )]
     pub exact: Vec<String>,
 
     /// The file paths to watch using extended glob patterns
-    #[arg(short, long, action = ArgAction::Append, verbatim_doc_comment)]
+    #[arg(
+        short,
+        long,
+        action = ArgAction::Append,
+        verbatim_doc_comment,
+        value_hint = ValueHint::AnyPath
+    )]
     pub glob: Vec<String>,
 
     /// Seconds to wait between each non-differing check
@@ -110,12 +133,29 @@ pub struct Cli {
     /// - `$path` or `${path}` will be the watched path that changed.
     /// - `$mtime` or `${mtime}` will be the last modified time of the watched
     ///   path (unavailable for deleted paths).
-    #[arg(verbatim_doc_comment)]
+    #[arg(
+        verbatim_doc_comment,
+        trailing_var_arg = true,
+        value_hint = ValueHint::CommandWithArguments
+    )]
     pub cmd: Vec<String>,
 
     /// Print help
     #[arg(short, long, verbatim_doc_comment, action = ArgAction::HelpLong)]
     pub help: Option<bool>,
+
+    /// Generates the appropriate autocomplete file for the specified shell.
+    /// This can help you quickly navigate jfswatch commands using tab
+    /// completion. Remember to restart your shell after writing the file.
+    ///
+    /// This feature of the installation is *not* required, and no cleanup or
+    /// uninstall method is provided.
+    ///
+    /// For 'bash', write this to a file: `/etc/bash_completion.d/jfswatch`.
+    /// Other shell types are supported, but you must figure out where to put
+    /// the file yourself. :)
+    #[arg(long, value_enum)]
+    pub autocomplete: Option<Shell>,
 }
 
 #[cfg(test)]
