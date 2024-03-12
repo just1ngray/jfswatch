@@ -20,7 +20,7 @@ Simply download the compiled binary from the
 to choose the correct binary for your system. The binary can then be executed
 by adding it to a `PATH` directory, or by running it directly.
 
-Optionally, you can use the `--autocomplete` flag to generate a file that will
+Optionally, you can use the `--autocomplete` option to generate a file that will
 enable tab completion for your shell. This is not required, but can be helpful.
 
 ## Examples
@@ -119,10 +119,15 @@ Options:
           Print help
 
       --autocomplete <AUTOCOMPLETE>
-          Generates the appropriate autocomplete file for the specified shell. This can help you quickly navigate jfswatch commands using tab completion. Remember to restart your shell after writing the file.
+          Generates the appropriate autocomplete file for the specified shell.
+          This can help you quickly navigate jfswatch commands using tab
+          completion. Remember to restart your shell after writing the file.
           
-          This feature of the installation is *not* required, and no cleanup or uninstall method is provided.
+          This feature of the installation is *not* required, and no cleanup or
+          uninstall method is provided.
           
-          For 'bash', write this to a file: `/etc/bash_completion.d/jfswatch`. Other shell types are supported, but you must figure out where to put the file yourself. :)
+          For 'bash', write this to a file: `/etc/bash_completion.d/jfswatch`.
+          Other shell types are supported, but you must figure out where to put
+          the file yourself. :)
           
           [possible values: bash, elvish, fish, powershell, zsh]
