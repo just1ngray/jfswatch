@@ -22,6 +22,15 @@ fn main() {
     let parsed = <cli::Cli as clap::Parser>::parse();
     trace!("Parsed CLI args: {:?}", parsed);
 
+    if parsed.cmd.len() == 0 {
+        let mut cmd = <cli::Cli as clap::CommandFactory>::command();
+        cmd.error(
+            clap::error::ErrorKind::ValueValidation,
+            "A command must be specified. Use -h for more help",
+        )
+        .exit();
+    }
+
     let mut explorers: Vec<Box<dyn Explorer>> =
         Vec::with_capacity(parsed.exact.len() + parsed.glob.len());
     explorers.extend(
