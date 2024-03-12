@@ -78,7 +78,12 @@ use clap::{ArgAction, Parser};
 /// ## Usage
 /// ```
 #[derive(Debug, Parser)]
-#[command(author, verbatim_doc_comment, term_width = 80, disable_help_flag = true)]
+#[command(
+    author,
+    verbatim_doc_comment,
+    term_width = 80,
+    disable_help_flag = true
+)]
 pub struct Cli {
     /// The exact file path to watch
     #[arg(short, long, action = ArgAction::Append, verbatim_doc_comment)]
