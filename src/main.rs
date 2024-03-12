@@ -22,12 +22,8 @@ fn main() {
     let parsed = <cli::Cli as clap::Parser>::parse();
     trace!("Parsed CLI args: {:?}", parsed);
 
-    if parsed.regex.len() > 0 {
-        unimplemented!("Regex patterns are not supported yet");
-    }
-
     let mut explorers: Vec<Box<dyn Explorer>> =
-        Vec::with_capacity(parsed.exact.len() + parsed.glob.len() + parsed.regex.len());
+        Vec::with_capacity(parsed.exact.len() + parsed.glob.len());
     explorers.extend(
         parsed
             .exact

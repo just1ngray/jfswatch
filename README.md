@@ -65,7 +65,6 @@ Arguments:
 Options:
   -e, --exact <EXACT>        The exact file paths to watch
   -g, --glob <GLOB>          The file paths to watch using extended glob patterns
-  -r, --regex <REGEX>        The file paths to watch using anchored regex patterns (NOT IMPLEMENTED YET!)
   -i, --interval <INTERVAL>  Seconds to wait between each non-differing check [default: 0.1]
   -s, --sleep <SLEEP>        Seconds to sleep the program after the specified command has been executed. The program will not check for changes during this time. By default it uses the same value as `interval`
   -h, --help                 Print help
